@@ -258,4 +258,4 @@ func writeByteToFile(b []byte) {
 		fmt.Println(err)
 		return
 	}
-}
+}*/
