@@ -1,6 +1,7 @@
 package main
 
 import (
+	Stl "LandscapeToStlConverter/Backend/lib"
 	"fmt"
 	"golang.org/x/image/tiff"
 	"image"
@@ -21,9 +22,32 @@ func main() {
 	fmt.Println(heightMap[0][5999])
 	fmt.Println(heightMap[5999][5999])
 	fmt.Println(heightMap[5999][0])
+	size := 6000
+	heightMap2 := make([][]float32, size)
+	for i := range heightMap2 {
+		heightMap2[i] = make([]float32, size)
+	}
+	max := heightMap[0][0]
+	for i:=0; i<size; i++{
+		for j := 0 ; j < size; j++ {
+			heightMap2[i][j] = heightMap[i][j]
+			if heightMap2[i][j] < max{
+				max = heightMap2[i][j]
+			}
+		}
+	}
+	for i:=0; i<size; i++{
+		for j := 0 ; j < size; j++ {
+			heightMap2[i][j] = heightMap2[i][j] - max
+		}
+	}
+
+	fmt.Println("start generating")
+	Stl.GenerateSTLMapFromHeightMap(heightMap2, 5000)
+
 }
 
-func getHeightMapOfImage(img image.Image, upper float32, right float32, lower float32, left float32) [][]uint32 {
+func getHeightMapOfImage(img image.Image, upper float32, right float32, lower float32, left float32) [][]float32 {
 	imgUpper := float32(50.0)
 	imgRight := float32(10.0)
 	imgLower := float32(45.0)
@@ -40,9 +64,9 @@ func getHeightMapOfImage(img image.Image, upper float32, right float32, lower fl
 
 	fmt.Printf("xSize: %d, ySize: %d\n", xSize, ySize)
 
-	heightMap := make([][]uint32, ySize)
+	heightMap := make([][]float32, ySize)
 	for i := range heightMap {
-		heightMap[i] = make([]uint32, xSize)
+		heightMap[i] = make([]float32, xSize)
 	}
 
 	for yHeightMap := 0; yHeightMap < ySize; yHeightMap++ {
@@ -55,7 +79,7 @@ func getHeightMapOfImage(img image.Image, upper float32, right float32, lower fl
 			}
 
 			r, _, _, _ := img.At(xImg, yImg).RGBA()
-			heightMap[yHeightMap][xHeightMap] = r
+			heightMap[yHeightMap][xHeightMap] = float32(r)
 		}
 	}
 
@@ -74,7 +98,7 @@ func getHeightMapOfImage(img image.Image, upper float32, right float32, lower fl
 	1Pixel = 0.00083333333
 */
 func tiffToImage() image.Image {
-	file, err := os.Open("./srtm/srtm_38_03/srtm_38_03.tif")
+	file, err := os.Open("C:/Users/maxgt/go/src/LandscapeToStlConverter/Backend/srtm/srtm_38_03/srtm_38_03.tif")
 	if err != nil {
 		fmt.Println(err)
 		return nil

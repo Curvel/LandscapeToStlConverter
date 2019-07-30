@@ -1,4 +1,4 @@
-package main
+package lib
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ import (
 	"os"
 )
 
-const MapHeight = 2000.0
+const MapHeight = 20.0
 
 
 type triangle struct{
@@ -22,14 +22,7 @@ type triangle struct{
 	v3 Vec3
 }
 
-func main() {
-	var heightMap [][]float32
-
-	heightMap = [][]float32{{1,2,1},{2,0,2},{1,2	,1}}
-	generateSTLMapFromHeightMap(heightMap, 5000)
-	}
-
-func generateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32){
+func GenerateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32){
 	var step float32
 	size := float32(sizeInMM)
 	c1 := Vec3{0,0,0}//bottom up left
@@ -53,15 +46,18 @@ func generateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32){
 	ct10 := triangle{c4,c5,c1}//left
 
 	step = size / float32(len(heightMap)-1)
+	heightstep := step /15
 	var triangles []triangle
 	triangles = append(triangles, ct1,ct2,ct3,ct4,ct5,ct6,ct7,ct8,ct9,ct10)
+	fmt.println("Triangles")
+	fmt.pro
 	for i := 0; i< len(heightMap); i++ {
 		for j := 0; j<len(heightMap[0]) ; j++ {
-			v1 := Vec3{float32(i) * step, float32(j) * step, heightMap[i][j]*step + MapHeight}
+			v1 := Vec3{float32(i) * step, float32(j) * step, heightMap[i][j]*heightstep + MapHeight}
 			if (i < len(heightMap)-1 && j < len(heightMap[0])-1) {
-				v2 := Vec3{float32(i+1) * step, float32(j) * step, heightMap[i+1][j]*step + MapHeight}
-				v3 := Vec3{float32(i) * step, float32(j+1) * step, heightMap[i][j+1]*step + MapHeight}
-				v4 := Vec3{float32(i+1) * step, float32(j+1) * step, heightMap[i+1][j+1]*step + MapHeight}
+				v2 := Vec3{float32(i+1) * step, float32(j) * step, heightMap[i+1][j]*heightstep + MapHeight}
+				v3 := Vec3{float32(i) * step, float32(j+1) * step, heightMap[i][j+1]*heightstep + MapHeight}
+				v4 := Vec3{float32(i+1) * step, float32(j+1) * step, heightMap[i+1][j+1]*heightstep + MapHeight}
 				t1 := triangle{v1, v2, v4}
 				t2 := triangle{v1, v4, v3}
 				triangles = append(triangles, t1, t2)
@@ -73,7 +69,7 @@ func generateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32){
 					triangles = append(triangles, triangle{v1, vd,vr})
 				}
 				if (j> 0){
-					vl := Vec3{v1.X(), v1.Y()-step, heightMap[i][j-1]*step + MapHeight}
+					vl := Vec3{v1.X(), v1.Y()-step, heightMap[i][j-1]*heightstep + MapHeight}
 					triangles = append(triangles, triangle{v1, vl,vd})
 				}
 			}
@@ -84,7 +80,7 @@ func generateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32){
 					triangles = append(triangles, triangle{v1, vr,vd})
 				}
 				if (j> 0){
-					vl := Vec3{v1.X(), v1.Y()-step,heightMap[i][j-1]*step + MapHeight}//falsch
+					vl := Vec3{v1.X(), v1.Y()-step,heightMap[i][j-1]*heightstep + MapHeight}//falsch
 					triangles = append(triangles, triangle{v1, vd,vl})
 				}
 			}
@@ -95,7 +91,7 @@ func generateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32){
 					triangles = append(triangles, triangle{v1, vd,vr})
 				}
 				if (i> 0){
-					vl := Vec3{v1.X()-step, v1.Y(), heightMap[i-1][j]*step + MapHeight}
+					vl := Vec3{v1.X()-step, v1.Y(), heightMap[i-1][j]*heightstep + MapHeight}
 					triangles = append(triangles, triangle{v1, vl,vd})
 				}
 			}
@@ -107,7 +103,7 @@ func generateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32){
 					triangles = append(triangles, triangle{v1, vr,vd})
 				}
 				if (i > 0){
-					vl := Vec3{v1.X()-step, v1.Y(), heightMap[i-1][j]*step + MapHeight}//falsch
+					vl := Vec3{v1.X()-step, v1.Y(), heightMap[i-1][j]*heightstep + MapHeight}//falsch
 					triangles = append(triangles, triangle{v1, vd,vl})
 				}
 			}
@@ -258,4 +254,4 @@ func writeByteToFile(b []byte) {
 		fmt.Println(err)
 		return
 	}
-}*/
+}
