@@ -1,14 +1,6 @@
 package main
 
-import (
-	"encoding/binary"
-	"fmt"
-	"github.com/golang/geo/r3"
-	"log"
-	"os"
-)
-
-func main() {
+/*func main() {
 	v1 := r3.Vector{0, 0, 0}
 	v2 := r3.Vector{3, 2, 0}
 	v3 := r3.Vector{0, 1, 3}
@@ -26,7 +18,7 @@ func main() {
 	"vertex 0, 3, 2\n" +
 	"endloop\n" +
 	"endfacet\n" +
-	"endsolid landscape")*/
+	"endsolid landscape")
 
 	var header [80]byte //Header
 	var triangleCount = binary.LittleEndian.Uint32()
@@ -103,4 +95,4 @@ func writeByteToFile(b []byte) {
 		fmt.Println(err)
 		return
 	}
-}
+}*/
