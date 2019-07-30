@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/binary"
 	"fmt"
 	"github.com/golang/geo/r3"
 	"log"
@@ -17,15 +18,18 @@ func main() {
 
 	n := dif1.Cross(dif2)
 
-	stl := []byte("solid landscape\n" +
-		"facet normal %f, %f, %f\n" +
-		"outer loop\n" +
-		"vertex 0, 0, 0\n" +
-		"vertex 3, 0, 1\n" +
-		"vertex 0, 3, 2\n" +
-		"endloop\n" +
-		"endfacet\n" +
-		"endsolid landscape")
+	/*stl := []byte("solid landscape\n" +
+	"facet normal %f, %f, %f\n" +
+	"outer loop\n" +
+	"vertex 0, 0, 0\n" +
+	"vertex 3, 0, 1\n" +
+	"vertex 0, 3, 2\n" +
+	"endloop\n" +
+	"endfacet\n" +
+	"endsolid landscape")*/
+
+	var header [80]byte //Header
+	var triangleCount = binary.LittleEndian.Uint32()
 
 	stl = fmt.Sprintf(stl, n.X, n.Y, n.Z)
 
