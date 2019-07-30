@@ -13,6 +13,9 @@ import (
 	"os"
 )
 
+const MapHeight = 2000.0
+
+
 type triangle struct{
 	v1 Vec3
 	v2 Vec3
@@ -20,53 +23,118 @@ type triangle struct{
 }
 
 func main() {
-	v1 := Vec3{0, 0, 0}
-	v2 := Vec3{3, 2, 0}
-	v3 := Vec3{0, 1, 3}
-	v4 := Vec3{3, 2, 1}
+	var heightMap [][]float32
 
+	heightMap = [][]float32{{1,2,1},{2,0,2},{1,2	,1}}
+	generateSTLMapFromHeightMap(heightMap, 5000)
+	}
 
+func generateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32){
+	var step float32
+	size := float32(sizeInMM)
+	c1 := Vec3{0,0,0}//bottom up left
+	c2 := Vec3{size,0,0}//bottom up right
+	c3 := Vec3{size,size,0} // bottom down right
+	c4 := Vec3{0,size,0} //bottom down left
+	c5 := Vec3{0,0,MapHeight} // top up left
+	c6 := Vec3{size,0,MapHeight} //top up right
+	c7 := Vec3{size,size,MapHeight} //top down right
+	c8 := Vec3{0,size,MapHeight} //top down left
 
-	/*stl := []byte("solid landscape\n" +
-	"facet normal %f, %f, %f\n" +
-	"outer loop\n" +
-	"vertex 0, 0, 0\n" +
-	"vertex 3, 0, 1\n" +
-	"vertex 0, 3, 2\n" +
-	"endloop\n" +
-	"endfacet\n" +
-	"endsolid landscape")*/
+	ct1 := triangle{c1,c2,c3}//bottom
+	ct2 := triangle{c1,c3,c4}//bottom
+	ct3 := triangle{c1,c5,c6}//up
+	ct4 := triangle{c1,c6,c2}//up
+	ct5 := triangle{c2,c6,c7}//right
+	ct6 := triangle{c2,c7,c3}//right
+	ct7 := triangle{c3,c7,c8}//down
+	ct8 := triangle{c3,c8,c4}//down
+	ct9 := triangle{c4,c8,c5}//left
+	ct10 := triangle{c4,c5,c1}//left
 
+	step = size / float32(len(heightMap)-1)
+	var triangles []triangle
+	triangles = append(triangles, ct1,ct2,ct3,ct4,ct5,ct6,ct7,ct8,ct9,ct10)
+	for i := 0; i< len(heightMap); i++ {
+		for j := 0; j<len(heightMap[0]) ; j++ {
+			v1 := Vec3{float32(i) * step, float32(j) * step, heightMap[i][j]*step + MapHeight}
+			if (i < len(heightMap)-1 && j < len(heightMap[0])-1) {
+				v2 := Vec3{float32(i+1) * step, float32(j) * step, heightMap[i+1][j]*step + MapHeight}
+				v3 := Vec3{float32(i) * step, float32(j+1) * step, heightMap[i][j+1]*step + MapHeight}
+				v4 := Vec3{float32(i+1) * step, float32(j+1) * step, heightMap[i+1][j+1]*step + MapHeight}
+				t1 := triangle{v1, v2, v4}
+				t2 := triangle{v1, v4, v3}
+				triangles = append(triangles, t1, t2)
+			}
+			if ( i == 0 && heightMap[i][j]*step != 0){
+				vd := Vec3{v1.X(), v1.Y(), MapHeight}
+				if (j < len(heightMap[0])-1){
+					vr := Vec3{v1.X(), v1.Y()+step, MapHeight}
+					triangles = append(triangles, triangle{v1, vd,vr})
+				}
+				if (j> 0){
+					vl := Vec3{v1.X(), v1.Y()-step, heightMap[i][j-1]*step + MapHeight}
+					triangles = append(triangles, triangle{v1, vl,vd})
+				}
+			}
+			if (i == len(heightMap)-1 && heightMap[i][j]*step != 0){
+				vd := Vec3{v1.X(), v1.Y(), MapHeight}
+				if (j < len(heightMap[0])-1){ 
+					vr := Vec3{v1.X(), v1.Y()+step, MapHeight}
+					triangles = append(triangles, triangle{v1, vr,vd})
+				}
+				if (j> 0){
+					vl := Vec3{v1.X(), v1.Y()-step,heightMap[i][j-1]*step + MapHeight}//falsch
+					triangles = append(triangles, triangle{v1, vd,vl})
+				}
+			}
+			if (j == 0 && heightMap[i][j]*step != 0){
+				vd := Vec3{v1.X(), v1.Y(), MapHeight}
+				if (i < len(heightMap)-1){
+					vr := Vec3{v1.X()+step, v1.Y(), MapHeight}
+					triangles = append(triangles, triangle{v1, vd,vr})
+				}
+				if (i> 0){
+					vl := Vec3{v1.X()-step, v1.Y(), heightMap[i-1][j]*step + MapHeight}
+					triangles = append(triangles, triangle{v1, vl,vd})
+				}
+			}
+
+			if (j == len(heightMap[0])-1 && heightMap[i][j]*step != 0){
+				vd := Vec3{v1.X(), v1.Y(), MapHeight}
+				if (i < len(heightMap)-1){
+					vr := Vec3{v1.X()+step, v1.Y(), MapHeight}
+					triangles = append(triangles, triangle{v1, vr,vd})
+				}
+				if (i > 0){
+					vl := Vec3{v1.X()-step, v1.Y(), heightMap[i-1][j]*step + MapHeight}//falsch
+					triangles = append(triangles, triangle{v1, vd,vl})
+				}
+			}
+
+		}
+	}
+	generateSTLMapFromTriangles(triangles)
+}
+
+func generateSTLMapFromTriangles(triangles []triangle){
 	var header [80]byte
-
 	var byteStl []byte
 	byteStl = header[:80]
-	/*byteStl = []byte{0,0,0,0,0,0,0,0,0,0,
-					 0,0,0,0,0,0,0,0,0,0,
-					 0,0,0,0,0,0,0,0,0,0,
-					 0,0,0,0,0,0,0,0,0,0,
-					 0,0,0,0,0,0,0,0,0,0,
-					 0,0,0,0,0,0,0,0,0,0,
-					 0,0,0,0,0,0,0,0,0,0,
-					 0,0,0,0,0,0,0,0,0,0,
-					}*/
-	triangleCount := convertLittleEndianInt(2)
 
-	triangleByte := triangleToByte(v1,v2,v3)
-
+	triangleCount := convertLittleEndianInt(uint32(len(triangles)))
 	byteStl = append(byteStl, triangleCount...)
-	byteStl = append(byteStl, triangleByte...)
+	for i := 0; i< len(triangles) ; i++{
 
-	triangleByte = triangleToByte(v2,v3,v4)
-	byteStl = append (byteStl, triangleByte...)
+		triangleByte := triangleToByte(triangles[i].v1,triangles[i].v2,triangles[i].v3)
+		byteStl = append(byteStl, triangleByte...)
+
+	}
 
 	writeByteToFile(byteStl)
 
 	log.Print("Test")
-
 }
-
-
 
 func triangleToByte(vector1 Vec3, vector2 Vec3, vector3 Vec3) []byte {
 
@@ -118,7 +186,7 @@ func convertLittleEndianFloat(inputEndian float32) []byte {
 	binary.Write(buf, binary.LittleEndian, inputEndian)
 	return buf.Bytes()
 }
-func convertLittleEndianInt(inputEndian int32) []byte {
+func convertLittleEndianInt(inputEndian uint32) []byte {
 
 	buf := new(bytes.Buffer)
 	binary.Write(buf, binary.LittleEndian, inputEndian)

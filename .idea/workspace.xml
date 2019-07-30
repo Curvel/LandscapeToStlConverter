@@ -2,7 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="056681f8-c84c-4c44-bb26-9e985c8f4a90" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/backend/StlGenerator.go" beforeDir="false" afterPath="$PROJECT_DIR$/backend/StlGenerator.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Backend/StlGenerator.go" beforeDir="false" afterPath="$PROJECT_DIR$/Backend/StlGenerator.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test.stl" beforeDir="false" afterPath="$PROJECT_DIR$/test.stl" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -15,8 +16,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Backend/StlGenerator.go">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="272">
-              <caret line="16" column="11" lean-forward="true" selection-start-line="16" selection-start-column="11" selection-end-line="16" selection-end-column="11" />
+            <state relative-caret-position="255">
+              <caret line="89" column="13" lean-forward="true" selection-start-line="89" selection-start-column="13" selection-end-line="89" selection-end-column="13" />
               <folding>
                 <element signature="e#14#162#0" expanded="true" />
               </folding>
@@ -133,6 +134,7 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
+    <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="go.gopath.indexing.explicitly.defined" value="true" />
     <property name="go.import.settings.migrated" value="true" />
@@ -194,7 +196,7 @@
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.13907285" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.121854305" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -255,8 +257,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/Backend/StlGenerator.go">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="272">
-          <caret line="16" column="11" lean-forward="true" selection-start-line="16" selection-start-column="11" selection-end-line="16" selection-end-column="11" />
+        <state relative-caret-position="255">
+          <caret line="89" column="13" lean-forward="true" selection-start-line="89" selection-start-column="13" selection-end-line="89" selection-end-column="13" />
           <folding>
             <element signature="e#14#162#0" expanded="true" />
           </folding>
