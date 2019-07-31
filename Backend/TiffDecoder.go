@@ -1,7 +1,7 @@
 package main
 
 import (
-	Stl "./lib"
+	Stl "LandscapeToStlConverter/Backend/lib"
 	"fmt"
 	"golang.org/x/image/tiff"
 	"image"
@@ -25,10 +25,10 @@ var strmMaps = [...]STRM{
 
 func main() {
 	// TODO change to console params
-	var top float32 = 55.0
-	var right float32 = 15.0
-	var bottom float32 = 52.0
-	var left float32 = 11.0
+	var top float32 = 50.1
+	var right float32 = 10.1
+	var bottom float32 = 49.9
+	var left float32 = 9.9
 
 	heightMap := getHeightMap(top, right, bottom, left)
 
@@ -102,6 +102,7 @@ func getHeightMap(top float32, right float32, bottom float32, left float32) [][]
 			yImg := xOffset + float32(xHeightMap)
 
 			height := getHeight(xImg, yImg, xScale, yScale, maxLeft, maxBottom)
+
 			heightMap[yHeightMap][xHeightMap] = float32(height)
 		}
 	}
@@ -109,12 +110,14 @@ func getHeightMap(top float32, right float32, bottom float32, left float32) [][]
 	return heightMap
 }
 
-func getHeight(x float32, y float32, xScale float32, yScale float32, maxLeft float32, maxBottom float32) int {
+func getHeight(x float32, y float32, xScale float32, yScale float32, maxLeft float32, maxBottom float32) uint32 {
 	imageNeeded := getNeededImage(x, y, xScale, yScale, maxLeft, maxBottom)
 
-	r, _, _, _ := imageNeeded.At(int(x)%6000, int(y)%6000).RGBA()
-
-	return int(r)
+	r, _, _, _ := imageNeeded.At((int(y)%6000), 6000 - (int(x)%6000)).RGBA()
+	if r > 10000 {
+		r = 0
+	}
+	return r
 }
 
 func getNeededImage(x float32, y float32, xScale float32, yScale float32, maxLeft float32, maxBottom float32) (neededImage image.Image) {
@@ -142,7 +145,7 @@ func loadImagesForRange(top float32, right float32, bottom float32, left float32
 }
 
 func srtmTiffToImage(name string) image.Image {
-	uri := fmt.Sprintf("./srtm/%s/%s.tif", name, name)
+	uri := fmt.Sprintf("C:/Users/maxgt/go/src/LandscapeToStlConverter/Backend/srtm/%s/%s.tif", name, name)
 
 	file, err := os.Open(uri)
 	if err != nil {
