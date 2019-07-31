@@ -1,80 +1,91 @@
 package main
 
 import (
-	Stl "LandscapeToStlConverter/Backend/lib"
+	Stl "./lib"
 	"fmt"
 	"golang.org/x/image/tiff"
 	"image"
 	"os"
 )
 
+type STRM struct {
+	name   string
+	top    float32
+	right  float32
+	bottom float32
+	left   float32
+	image  image.Image
+}
+
+var strmMaps = [...]STRM{
+	{"srtm_38_03", 50.0, 10.0, 45.0, 5.0, nil},
+	{"srtm_38_02", 55.0, 10.0, 50.0, 5.0, nil},
+	{"srtm_39_02", 55.0, 15.0, 50.0, 10.0, nil},
+	{"srtm_39_03", 50.0, 15.0, 45.0, 10.0, nil}}
+
 func main() {
-	img := tiffToImage()
+	// TODO change to console params
+	var top float32 = 55.0
+	var right float32 = 15.0
+	var bottom float32 = 52.0
+	var left float32 = 11.0
 
-	fmt.Println(img.At(0, 0))
-	fmt.Println(img.At(0, 5999))
-	fmt.Println(img.At(5999, 5999))
-	fmt.Println(img.At(5999, 0))
+	heightMap := getHeightMap(top, right, bottom, left)
 
-	heightMap := getHeightMapOfImage(img, 50.0, 10.0, 45.0, 5.0)
-
-	fmt.Println(heightMap[0][0])
-	fmt.Println(heightMap[0][5999])
-	fmt.Println(heightMap[5999][5999])
-	fmt.Println(heightMap[5999][0])
-	size := 100
-	heightMap2 := make([][]float32, size)
-	for i := range heightMap2 {
-		heightMap2[i] = make([]float32, size)
-	}
-	min := heightMap[0][0]
-	for i:=0; i<size; i++{
-		for j := 0 ; j < size; j++ {
-			heightMap2[i][j] = heightMap[i][j]
-			if heightMap2[i][j] < min {
-				min = heightMap2[i][j]
-			}
-		}
-	}
-	for i:=0; i<size; i++{
-		for j := 0 ; j < size; j++ {
-			heightMap2[i][j] = heightMap2[i][j] - min
-		}
-	}
-
-	sideMap := make ( []float32, size)
-	min = heightMap[0][0]
-	for i := 0; i < size; i++ {
-		sideMap[i] = heightMap[i+300][0]
-		if sideMap[i] < min {
-			min = sideMap[i]
-		}
-	}
-	for i := 0; i < size; i++ {
-		sideMap[i] = sideMap[i] - min
-
-	}
-
-	fmt.Println("start generating")
-	Stl.GenerateSTLMapFromSideMap(sideMap, 50)
-	//Stl.GenerateSTLMapFromHeightMap(heightMap2, 20)
+	Stl.GenerateSTLMapFromHeightMap(heightMap, 5000)
 
 }
 
-func getHeightMapOfImage(img image.Image, upper float32, right float32, lower float32, left float32) [][]float32 {
-	imgUpper := float32(50.0)
-	imgRight := float32(10.0)
-	imgLower := float32(45.0)
-	imgLeft := float32(5.0)
+func getMaxBorders() (maxTop float32, maxRight float32, maxBottom float32, maxLeft float32) {
+	maxTop = -100000
+	maxRight = -100000
+	maxBottom = 100000
+	maxLeft = 100000
 
-	imgXPoints := float32(img.Bounds().Max.X)
-	imgYPoints := float32(img.Bounds().Max.Y)
+	for _, strmMap := range strmMaps {
+		if strmMap.top > maxTop {
+			maxTop = strmMap.top
+		}
+		if strmMap.right > maxRight {
+			maxRight = strmMap.right
+		}
+		if strmMap.left < maxLeft {
+			maxLeft = strmMap.left
+		}
+		if strmMap.bottom < maxBottom {
+			maxBottom = strmMap.bottom
+		}
+	}
 
-	yScale := (imgUpper - imgLower) / imgYPoints
-	xScale := (imgRight - imgLeft) / imgXPoints
+	return
+}
 
+func isSelectionInRange(top float32, right float32, bottom float32, left float32) bool {
+	maxTop, maxRight, maxBottom, maxLeft := getMaxBorders()
+
+	return top <= maxTop && right <= maxRight && left >= maxLeft && bottom >= maxBottom
+}
+
+func getHeightMap(top float32, right float32, bottom float32, left float32) [][]float32 {
+
+	if !isSelectionInRange(top, right, bottom, left) {
+		panic("Selection out of range!")
+	}
+
+	loadImagesForRange(top, right, bottom, left)
+
+	maxTop, maxRight, maxBottom, maxLeft := getMaxBorders()
+
+	imgXPoints := 6000 * ((maxTop - maxBottom) / 5)
+	imgYPoints := 6000 * ((maxRight - maxLeft) / 5)
+
+	// Coordinates to SRTM-Map scales
+	yScale := (maxTop - maxBottom) / imgYPoints
+	xScale := (maxRight - maxLeft) / imgXPoints
+
+	// Size of generated Height Map
 	xSize := int((right - left) / xScale)
-	ySize := int((upper - lower) / yScale)
+	ySize := int((top - bottom) / yScale)
 
 	fmt.Printf("xSize: %d, ySize: %d\n", xSize, ySize)
 
@@ -83,36 +94,57 @@ func getHeightMapOfImage(img image.Image, upper float32, right float32, lower fl
 		heightMap[i] = make([]float32, xSize)
 	}
 
+	yOffset := -(maxBottom - bottom) / yScale
+	xOffset := -(maxLeft - left) / xScale
 	for yHeightMap := 0; yHeightMap < ySize; yHeightMap++ {
 		for xHeightMap := 0; xHeightMap < xSize; xHeightMap++ {
-			xImg := int(float32(yHeightMap))
-			yImg := int(float32(xHeightMap))
+			xImg := yOffset + float32(yHeightMap)
+			yImg := xOffset + float32(xHeightMap)
 
-			if xImg > ySize || xImg < 0 || yImg > xSize || yImg < 0 {
-				fmt.Print("")
-			}
-
-			r, _, _, _ := img.At(xImg, yImg).RGBA()
-			heightMap[yHeightMap][xHeightMap] = float32(r)
+			height := getHeight(xImg, yImg, xScale, yScale, maxLeft, maxBottom)
+			heightMap[yHeightMap][xHeightMap] = float32(height)
 		}
 	}
 
 	return heightMap
 }
 
-/* 	links := 0
-	rechts := img.Bounds().Max.X - 1 //5999
-	unten := img.Bounds().Max.Y - 1 //5999
- 	oben := 0
-	*Left 5.0000000 //Längengrad
-	Lower 45.0000000 //Breitengrad
-	Right 10.0000000 //Längengrad
-	Upper 50.0000000 //Breitengrad
+func getHeight(x float32, y float32, xScale float32, yScale float32, maxLeft float32, maxBottom float32) int {
+	imageNeeded := getNeededImage(x, y, xScale, yScale, maxLeft, maxBottom)
 
-	1Pixel = 0.00083333333
-*/
-func tiffToImage() image.Image {
-	file, err := os.Open("C:/Users/maxgt/go/src/LandscapeToStlConverter/Backend/srtm/srtm_38_03/srtm_38_03.tif")
+	r, _, _, _ := imageNeeded.At(int(x)%6000, int(y)%6000).RGBA()
+
+	return int(r)
+}
+
+func getNeededImage(x float32, y float32, xScale float32, yScale float32, maxLeft float32, maxBottom float32) (neededImage image.Image) {
+	xCoordinate := y*yScale + maxLeft
+	yCoordinate := x*xScale + maxBottom
+
+	//fmt.Printf("xCoor: %f, yCoord: %f", xCoordinate, yCoordinate)
+	for _, strmMap := range strmMaps {
+		//fmt.Printf("top: %f, right: %f, bottom: %f, left: %f, %d \n", strmMap.top, strmMap.right, strmMap.bottom, strmMap.left, i)
+		if strmMap.top >= yCoordinate && strmMap.right >= xCoordinate && strmMap.bottom <= yCoordinate && strmMap.left <= xCoordinate {
+			return strmMap.image
+		}
+	}
+
+	panic("Needed Image was not loaded!")
+}
+
+func loadImagesForRange(top float32, right float32, bottom float32, left float32) {
+	for i, m := range strmMaps {
+		if bottom <= m.top && top >= m.bottom && left <= m.right && right >= m.left {
+			img := srtmTiffToImage(m.name)
+			strmMaps[i].image = img
+		}
+	}
+}
+
+func srtmTiffToImage(name string) image.Image {
+	uri := fmt.Sprintf("./srtm/%s/%s.tif", name, name)
+
+	file, err := os.Open(uri)
 	if err != nil {
 		fmt.Println(err)
 		return nil
