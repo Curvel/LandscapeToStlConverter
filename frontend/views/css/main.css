@@ -1,3 +1,27 @@
+/* #########
+ * # GENERIC
+ */
+
+/* BACKGROUNDS */
+.default-background {
+    background-color: #ffffff;
+}
+.ancient-backgroung {
+    background-image: -moz-linear-gradient(0deg, #3e69fe 0%, #4cd4e3 100%);
+    background-image: -webkit-linear-gradient(0deg, #3e69fe 0%, #4cd4e3 100%);
+    background-image: -ms-linear-gradient(0deg, #3e69fe 0%, #4cd4e3 100%);
+}
+
+/* #######
+ * # THEME
+ */
+body {
+    background-image: -moz-linear-gradient(0deg, #4cd4e3 0%, #3e69fe 100%);
+    background-image: -webkit-linear-gradient(0deg, #4cd4e3 0%, #3e69fe 100%);
+    background-image: -ms-linear-gradient(0deg, #4cd4e3 0%, #3e69fe 100%);
+}
+
+/* main wrapper first*/
 .main-wrapper-first {
     width: 68.75%;
     margin: 0 auto;
@@ -23,6 +47,7 @@
     }
 }
 
+/* main wraper */
 .main-wrapper {
     width: 68.75%;
     margin: 0 auto;
@@ -44,4 +69,103 @@
     .main-wrapper {
         width: 97%;
     }
+}
+
+/* #########
+ * # SPECIFIC
+ */
+
+/* HEADER */
+.logo {
+    display:inline-block;
+    padding-bottom: 10px;
+}
+.navbar {
+    float:right;
+    height: 95px;
+}
+
+.navbar a {
+    color: #ffffff;
+}
+.navbar a:hover {
+    color: #256086;
+    text-decoration: none;
+}
+
+.nav-item:hover {
+    background-color: #ffffff;
+    border-radius: 5px;
+}
+.nav-item .active {
+    color: #256086;
+    background-color: #ffffff;
+    border-radius: 5px;
+}
+
+/* FLOW SECTION */
+.flow-section {
+    padding-top: 80px;
+    padding-bottom: 80px;
+}
+
+/* <-> */
+.flow-image-box {
+    position: relative;
+}
+.flow-image-box > img {
+    max-height: 100%;
+    max-width: 80%;
+    width: auto;
+    height: auto;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: auto;
+}
+
+/* 1 2 3 4 */
+.flow-box {
+    text-align: center;
+}
+@media (max-width: 767px) {
+    .flow-box {
+        margin-bottom: 25px;
+    }
+}
+.flow-icon-box {
+    margin-bottom: 20px;
+}
+.flow-caption {
+    font-weight: bold;
+}
+
+/* MAIN SECTION */
+.main-section {
+    padding-top: 30px;
+}
+
+/* map */
+.map-container {
+    height: 500px;
+    margin-bottom: 30px;
+}
+
+#map {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* form */
+form button {
+    margin-top: 15px;
+}
+
+/* PREVIEW SECTION */
+.preview-section {
+    padding-top: 40px;
 }
