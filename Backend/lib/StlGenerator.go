@@ -16,7 +16,7 @@ import (
 const MapHeight = 2.0
 const ProfileHeight = 5.0
 const ProfileThickness = 2.0
-const HeightFaktor = 12.0
+const HeightFaktor =10.0
 
 type triangle struct {
 	v1 Vec3

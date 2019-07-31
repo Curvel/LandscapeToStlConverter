@@ -3,6 +3,7 @@ package main
 import (
 	Stl "LandscapeToStlConverter/Backend/lib"
 	"fmt"
+	"github.com/go-gl/mathgl/mgl32"
 	"golang.org/x/image/tiff"
 	"image"
 	"os"
@@ -25,14 +26,14 @@ var strmMaps = [...]STRM{
 
 func main() {
 	// TODO change to console params
-	var top float32 = 50.1
-	var right float32 = 10.1
-	var bottom float32 = 49.9
-	var left float32 = 9.9
+	var top float32 = 49.27
+	var right float32 = 8.55
+	var bottom float32 = 48.91
+	var left float32 = 8.19
 
 	heightMap := getHeightMap(top, right, bottom, left)
 
-	Stl.GenerateSTLMapFromHeightMap(heightMap, 5000)
+	Stl.GenerateSTLMapFromHeightMap(heightMap, 50)
 
 }
 
@@ -84,8 +85,8 @@ func getHeightMap(top float32, right float32, bottom float32, left float32) [][]
 	xScale := (maxRight - maxLeft) / imgXPoints
 
 	// Size of generated Height Map
-	xSize := int((right - left) / xScale)
-	ySize := int((top - bottom) / yScale)
+	xSize := int( mgl32.Round((right - left) / xScale,0))
+	ySize := int( mgl32.Round((top - bottom) / yScale,0))
 
 	fmt.Printf("xSize: %d, ySize: %d\n", xSize, ySize)
 
@@ -94,12 +95,12 @@ func getHeightMap(top float32, right float32, bottom float32, left float32) [][]
 		heightMap[i] = make([]float32, xSize)
 	}
 
-	yOffset := -(maxBottom - bottom) / yScale
-	xOffset := -(maxLeft - left) / xScale
+	yOffset := int(-(maxBottom - bottom) / yScale)
+	xOffset := int(-(maxLeft - left) / xScale)
 	for yHeightMap := 0; yHeightMap < ySize; yHeightMap++ {
 		for xHeightMap := 0; xHeightMap < xSize; xHeightMap++ {
-			xImg := yOffset + float32(yHeightMap)
-			yImg := xOffset + float32(xHeightMap)
+			xImg := yOffset + yHeightMap
+			yImg := xOffset + xHeightMap
 
 			height := getHeight(xImg, yImg, xScale, yScale, maxLeft, maxBottom)
 
@@ -110,24 +111,24 @@ func getHeightMap(top float32, right float32, bottom float32, left float32) [][]
 	return heightMap
 }
 
-func getHeight(x float32, y float32, xScale float32, yScale float32, maxLeft float32, maxBottom float32) uint32 {
+func getHeight(x int, y int, xScale float32, yScale float32, maxLeft float32, maxBottom float32) uint32 {
 	imageNeeded := getNeededImage(x, y, xScale, yScale, maxLeft, maxBottom)
 
-	r, _, _, _ := imageNeeded.At((int(y)%6000), 6000 - (int(x)%6000)).RGBA()
+	r, _, _, _ := imageNeeded.At((y%6000), 5999 - (x%6000)).RGBA()
 	if r > 10000 {
 		r = 0
 	}
 	return r
 }
 
-func getNeededImage(x float32, y float32, xScale float32, yScale float32, maxLeft float32, maxBottom float32) (neededImage image.Image) {
-	xCoordinate := y*yScale + maxLeft
-	yCoordinate := x*xScale + maxBottom
+func getNeededImage(x int, y int, xScale float32, yScale float32, maxLeft float32, maxBottom float32) (neededImage image.Image) {
+	xCoordinate := float32(y)*yScale + maxLeft
+	yCoordinate := float32(x)*xScale + maxBottom
 
 	//fmt.Printf("xCoor: %f, yCoord: %f", xCoordinate, yCoordinate)
 	for _, strmMap := range strmMaps {
 		//fmt.Printf("top: %f, right: %f, bottom: %f, left: %f, %d \n", strmMap.top, strmMap.right, strmMap.bottom, strmMap.left, i)
-		if strmMap.top >= yCoordinate && strmMap.right >= xCoordinate && strmMap.bottom <= yCoordinate && strmMap.left <= xCoordinate {
+		if strmMap.top > yCoordinate && strmMap.right > xCoordinate && strmMap.bottom <= yCoordinate && strmMap.left <= xCoordinate {
 			return strmMap.image
 		}
 	}
