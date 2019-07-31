@@ -3,8 +3,8 @@ package lib
 import (
 	"bytes"
 	"encoding/binary"
-	"github.com/golang/geo/r3"
 	"fmt"
+	"github.com/golang/geo/r3"
 	//"golang.org/x/image/math/f32"
 	//"encoding/binary"
 	. "github.com/go-gl/mathgl/mgl32"
@@ -15,46 +15,44 @@ import (
 
 const MapHeight = 20.0
 
-
-type triangle struct{
+type triangle struct {
 	v1 Vec3
 	v2 Vec3
 	v3 Vec3
 }
 
-func GenerateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32){
+func GenerateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32) {
 	var step float32
 	size := float32(sizeInMM)
-	c1 := Vec3{0,0,0}//bottom up left
-	c2 := Vec3{size,0,0}//bottom up right
-	c3 := Vec3{size,size,0} // bottom down right
-	c4 := Vec3{0,size,0} //bottom down left
-	c5 := Vec3{0,0,MapHeight} // top up left
-	c6 := Vec3{size,0,MapHeight} //top up right
-	c7 := Vec3{size,size,MapHeight} //top down right
-	c8 := Vec3{0,size,MapHeight} //top down left
+	c1 := Vec3{0, 0, 0}               //bottom up left
+	c2 := Vec3{size, 0, 0}            //bottom up right
+	c3 := Vec3{size, size, 0}         // bottom down right
+	c4 := Vec3{0, size, 0}            //bottom down left
+	c5 := Vec3{0, 0, MapHeight}       // top up left
+	c6 := Vec3{size, 0, MapHeight}    //top up right
+	c7 := Vec3{size, size, MapHeight} //top down right
+	c8 := Vec3{0, size, MapHeight}    //top down left
 
-	ct1 := triangle{c1,c2,c3}//bottom
-	ct2 := triangle{c1,c3,c4}//bottom
-	ct3 := triangle{c1,c5,c6}//up
-	ct4 := triangle{c1,c6,c2}//up
-	ct5 := triangle{c2,c6,c7}//right
-	ct6 := triangle{c2,c7,c3}//right
-	ct7 := triangle{c3,c7,c8}//down
-	ct8 := triangle{c3,c8,c4}//down
-	ct9 := triangle{c4,c8,c5}//left
-	ct10 := triangle{c4,c5,c1}//left
+	ct1 := triangle{c1, c2, c3}  //bottom
+	ct2 := triangle{c1, c3, c4}  //bottom
+	ct3 := triangle{c1, c5, c6}  //up
+	ct4 := triangle{c1, c6, c2}  //up
+	ct5 := triangle{c2, c6, c7}  //right
+	ct6 := triangle{c2, c7, c3}  //right
+	ct7 := triangle{c3, c7, c8}  //down
+	ct8 := triangle{c3, c8, c4}  //down
+	ct9 := triangle{c4, c8, c5}  //left
+	ct10 := triangle{c4, c5, c1} //left
 
 	step = size / float32(len(heightMap)-1)
-	heightstep := step /15
+	heightstep := step / 15
 	var triangles []triangle
-	triangles = append(triangles, ct1,ct2,ct3,ct4,ct5,ct6,ct7,ct8,ct9,ct10)
-	fmt.println("Triangles")
-	fmt.pro
-	for i := 0; i< len(heightMap); i++ {
-		for j := 0; j<len(heightMap[0]) ; j++ {
+	triangles = append(triangles, ct1, ct2, ct3, ct4, ct5, ct6, ct7, ct8, ct9, ct10)
+	fmt.Println("Generate Triangles...")
+	for i := 0; i < len(heightMap); i++ {
+		for j := 0; j < len(heightMap[0]); j++ {
 			v1 := Vec3{float32(i) * step, float32(j) * step, heightMap[i][j]*heightstep + MapHeight}
-			if (i < len(heightMap)-1 && j < len(heightMap[0])-1) {
+			if i < len(heightMap)-1 && j < len(heightMap[0])-1 {
 				v2 := Vec3{float32(i+1) * step, float32(j) * step, heightMap[i+1][j]*heightstep + MapHeight}
 				v3 := Vec3{float32(i) * step, float32(j+1) * step, heightMap[i][j+1]*heightstep + MapHeight}
 				v4 := Vec3{float32(i+1) * step, float32(j+1) * step, heightMap[i+1][j+1]*heightstep + MapHeight}
@@ -62,49 +60,49 @@ func GenerateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32){
 				t2 := triangle{v1, v4, v3}
 				triangles = append(triangles, t1, t2)
 			}
-			if ( i == 0 && heightMap[i][j]*step != 0){
+			if i == 0 && heightMap[i][j]*step != 0 {
 				vd := Vec3{v1.X(), v1.Y(), MapHeight}
-				if (j < len(heightMap[0])-1){
-					vr := Vec3{v1.X(), v1.Y()+step, MapHeight}
-					triangles = append(triangles, triangle{v1, vd,vr})
+				if j < len(heightMap[0])-1 {
+					vr := Vec3{v1.X(), v1.Y() + step, MapHeight}
+					triangles = append(triangles, triangle{v1, vd, vr})
 				}
-				if (j> 0){
-					vl := Vec3{v1.X(), v1.Y()-step, heightMap[i][j-1]*heightstep + MapHeight}
-					triangles = append(triangles, triangle{v1, vl,vd})
+				if j > 0 {
+					vl := Vec3{v1.X(), v1.Y() - step, heightMap[i][j-1]*heightstep + MapHeight}
+					triangles = append(triangles, triangle{v1, vl, vd})
 				}
 			}
-			if (i == len(heightMap)-1 && heightMap[i][j]*step != 0){
+			if i == len(heightMap)-1 && heightMap[i][j]*step != 0 {
 				vd := Vec3{v1.X(), v1.Y(), MapHeight}
-				if (j < len(heightMap[0])-1){ 
-					vr := Vec3{v1.X(), v1.Y()+step, MapHeight}
-					triangles = append(triangles, triangle{v1, vr,vd})
+				if j < len(heightMap[0])-1 {
+					vr := Vec3{v1.X(), v1.Y() + step, MapHeight}
+					triangles = append(triangles, triangle{v1, vr, vd})
 				}
-				if (j> 0){
-					vl := Vec3{v1.X(), v1.Y()-step,heightMap[i][j-1]*heightstep + MapHeight}//falsch
-					triangles = append(triangles, triangle{v1, vd,vl})
+				if j > 0 {
+					vl := Vec3{v1.X(), v1.Y() - step, heightMap[i][j-1]*heightstep + MapHeight} //falsch
+					triangles = append(triangles, triangle{v1, vd, vl})
 				}
 			}
-			if (j == 0 && heightMap[i][j]*step != 0){
+			if j == 0 && heightMap[i][j]*step != 0 {
 				vd := Vec3{v1.X(), v1.Y(), MapHeight}
-				if (i < len(heightMap)-1){
-					vr := Vec3{v1.X()+step, v1.Y(), MapHeight}
-					triangles = append(triangles, triangle{v1, vd,vr})
+				if i < len(heightMap)-1 {
+					vr := Vec3{v1.X() + step, v1.Y(), MapHeight}
+					triangles = append(triangles, triangle{v1, vd, vr})
 				}
-				if (i> 0){
-					vl := Vec3{v1.X()-step, v1.Y(), heightMap[i-1][j]*heightstep + MapHeight}
-					triangles = append(triangles, triangle{v1, vl,vd})
+				if i > 0 {
+					vl := Vec3{v1.X() - step, v1.Y(), heightMap[i-1][j]*heightstep + MapHeight}
+					triangles = append(triangles, triangle{v1, vl, vd})
 				}
 			}
 
-			if (j == len(heightMap[0])-1 && heightMap[i][j]*step != 0){
+			if j == len(heightMap[0])-1 && heightMap[i][j]*step != 0 {
 				vd := Vec3{v1.X(), v1.Y(), MapHeight}
-				if (i < len(heightMap)-1){
-					vr := Vec3{v1.X()+step, v1.Y(), MapHeight}
-					triangles = append(triangles, triangle{v1, vr,vd})
+				if i < len(heightMap)-1 {
+					vr := Vec3{v1.X() + step, v1.Y(), MapHeight}
+					triangles = append(triangles, triangle{v1, vr, vd})
 				}
-				if (i > 0){
-					vl := Vec3{v1.X()-step, v1.Y(), heightMap[i-1][j]*heightstep + MapHeight}//falsch
-					triangles = append(triangles, triangle{v1, vd,vl})
+				if i > 0 {
+					vl := Vec3{v1.X() - step, v1.Y(), heightMap[i-1][j]*heightstep + MapHeight} //falsch
+					triangles = append(triangles, triangle{v1, vd, vl})
 				}
 			}
 
@@ -113,16 +111,16 @@ func GenerateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32){
 	generateSTLMapFromTriangles(triangles)
 }
 
-func generateSTLMapFromTriangles(triangles []triangle){
+func generateSTLMapFromTriangles(triangles []triangle) {
 	var header [80]byte
 	var byteStl []byte
 	byteStl = header[:80]
 
 	triangleCount := convertLittleEndianInt(uint32(len(triangles)))
 	byteStl = append(byteStl, triangleCount...)
-	for i := 0; i< len(triangles) ; i++{
+	for i := 0; i < len(triangles); i++ {
 
-		triangleByte := triangleToByte(triangles[i].v1,triangles[i].v2,triangles[i].v3)
+		triangleByte := triangleToByte(triangles[i].v1, triangles[i].v2, triangles[i].v3)
 		byteStl = append(byteStl, triangleByte...)
 
 	}
@@ -143,36 +141,36 @@ func triangleToByte(vector1 Vec3, vector2 Vec3, vector3 Vec3) []byte {
 
 	vectorN = dif1.Cross(dif2)
 
-	colorBytes = []byte{1,1}
+	colorBytes = []byte{1, 1}
 
-	returnBytes =append(returnBytes, convertLittleEndianFloat(vectorN.X())...)
-	returnBytes =append(returnBytes, convertLittleEndianFloat(vectorN.Y())...)
-	returnBytes =append(returnBytes, convertLittleEndianFloat(vectorN.Z())...)
-	returnBytes =append(returnBytes, convertLittleEndianFloat(vector1.X())...)
-	returnBytes =append(returnBytes, convertLittleEndianFloat(vector1.Y())...)
-	returnBytes =append(returnBytes, convertLittleEndianFloat(vector1.Z())...)
-	returnBytes =append(returnBytes, convertLittleEndianFloat(vector2.X())...)
-	returnBytes =append(returnBytes, convertLittleEndianFloat(vector2.Y())...)
-	returnBytes =append(returnBytes, convertLittleEndianFloat(vector2.Z())...)
-	returnBytes =append(returnBytes, convertLittleEndianFloat(vector3.X())...)
-	returnBytes =append(returnBytes, convertLittleEndianFloat(vector3.Y())...)
-	returnBytes =append(returnBytes, convertLittleEndianFloat(vector3.Z())...)
+	returnBytes = append(returnBytes, convertLittleEndianFloat(vectorN.X())...)
+	returnBytes = append(returnBytes, convertLittleEndianFloat(vectorN.Y())...)
+	returnBytes = append(returnBytes, convertLittleEndianFloat(vectorN.Z())...)
+	returnBytes = append(returnBytes, convertLittleEndianFloat(vector1.X())...)
+	returnBytes = append(returnBytes, convertLittleEndianFloat(vector1.Y())...)
+	returnBytes = append(returnBytes, convertLittleEndianFloat(vector1.Z())...)
+	returnBytes = append(returnBytes, convertLittleEndianFloat(vector2.X())...)
+	returnBytes = append(returnBytes, convertLittleEndianFloat(vector2.Y())...)
+	returnBytes = append(returnBytes, convertLittleEndianFloat(vector2.Z())...)
+	returnBytes = append(returnBytes, convertLittleEndianFloat(vector3.X())...)
+	returnBytes = append(returnBytes, convertLittleEndianFloat(vector3.Y())...)
+	returnBytes = append(returnBytes, convertLittleEndianFloat(vector3.Z())...)
 	returnBytes = append(returnBytes, colorBytes...)
 
 	/* returnBytes =append(returnBytes, 	VectorNX[0], VectorNX[1], VectorNX[2], VectorNX[3],
-										VectorNY[0], VectorNY[1], VectorNY[2], VectorNY[3],
-										VectorNZ[0], VectorNZ[1], VectorNZ[2], VectorNZ[3],
-										Vector1X[0], Vector1X[1], Vector1X[2], Vector1X[3],
-										Vector1Y[0], Vector1Y[1], Vector1Y[2], Vector1Y[3],
-										Vector1Z[0], Vector1Z[1], Vector1Z[2], Vector1Z[3],
-										Vector2X[0], Vector2X[1], Vector2X[2], Vector2X[3],
-										Vector2Y[0], Vector2Y[1], Vector2Y[2], Vector2Y[3],
-										Vector2Z[0], Vector2Z[1], Vector2Z[2], Vector2Z[3],
-										Vector3X[0], Vector3X[1], Vector3X[2], Vector3X[3],
-										Vector3Y[0], Vector3Y[1], Vector3Y[2], Vector3Y[3],
-										Vector3Z[0], Vector3Z[1], Vector3Z[2], Vector3Z[3])
+	VectorNY[0], VectorNY[1], VectorNY[2], VectorNY[3],
+	VectorNZ[0], VectorNZ[1], VectorNZ[2], VectorNZ[3],
+	Vector1X[0], Vector1X[1], Vector1X[2], Vector1X[3],
+	Vector1Y[0], Vector1Y[1], Vector1Y[2], Vector1Y[3],
+	Vector1Z[0], Vector1Z[1], Vector1Z[2], Vector1Z[3],
+	Vector2X[0], Vector2X[1], Vector2X[2], Vector2X[3],
+	Vector2Y[0], Vector2Y[1], Vector2Y[2], Vector2Y[3],
+	Vector2Z[0], Vector2Z[1], Vector2Z[2], Vector2Z[3],
+	Vector3X[0], Vector3X[1], Vector3X[2], Vector3X[3],
+	Vector3Y[0], Vector3Y[1], Vector3Y[2], Vector3Y[3],
+	Vector3Z[0], Vector3Z[1], Vector3Z[2], Vector3Z[3])
 
-*/
+	*/
 	return returnBytes
 }
 

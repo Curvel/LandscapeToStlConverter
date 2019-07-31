@@ -1,7 +1,7 @@
 package main
 
 import (
-	Stl "LandscapeToStlConverter/Backend/lib"
+	Stl "./lib"
 	"fmt"
 	"golang.org/x/image/tiff"
 	"image"
@@ -11,39 +11,14 @@ import (
 func main() {
 	img := tiffToImage()
 
-	fmt.Println(img.At(0, 0))
+	/*fmt.Println(img.At(0, 0))
 	fmt.Println(img.At(0, 5999))
 	fmt.Println(img.At(5999, 5999))
-	fmt.Println(img.At(5999, 0))
+	fmt.Println(img.At(5999, 0))*/
 
-	heightMap := getHeightMapOfImage(img, 50.0, 10.0, 45.0, 5.0)
+	heightMap := getHeightMapOfImage(img, 49.0, 9.0, 47.0, 7.0)
 
-	fmt.Println(heightMap[0][0])
-	fmt.Println(heightMap[0][5999])
-	fmt.Println(heightMap[5999][5999])
-	fmt.Println(heightMap[5999][0])
-	size := 6000
-	heightMap2 := make([][]float32, size)
-	for i := range heightMap2 {
-		heightMap2[i] = make([]float32, size)
-	}
-	max := heightMap[0][0]
-	for i:=0; i<size; i++{
-		for j := 0 ; j < size; j++ {
-			heightMap2[i][j] = heightMap[i][j]
-			if heightMap2[i][j] < max{
-				max = heightMap2[i][j]
-			}
-		}
-	}
-	for i:=0; i<size; i++{
-		for j := 0 ; j < size; j++ {
-			heightMap2[i][j] = heightMap2[i][j] - max
-		}
-	}
-
-	fmt.Println("start generating")
-	Stl.GenerateSTLMapFromHeightMap(heightMap2, 5000)
+	Stl.GenerateSTLMapFromHeightMap(heightMap, 5000)
 
 }
 
@@ -69,12 +44,14 @@ func getHeightMapOfImage(img image.Image, upper float32, right float32, lower fl
 		heightMap[i] = make([]float32, xSize)
 	}
 
+	yOffset := -int((imgLower - lower) / yScale)
+	xOffset := -int((imgLeft - left) / xScale)
 	for yHeightMap := 0; yHeightMap < ySize; yHeightMap++ {
 		for xHeightMap := 0; xHeightMap < xSize; xHeightMap++ {
-			xImg := int(float32(yHeightMap))
-			yImg := int(float32(xHeightMap))
+			xImg := yOffset + yHeightMap
+			yImg := xOffset + xHeightMap
 
-			if xImg > ySize || xImg < 0 || yImg > xSize || yImg < 0 {
+			if xImg > 5999 || xImg < 0 || yImg > 5999 || yImg < 0 {
 				fmt.Print("")
 			}
 
@@ -98,7 +75,7 @@ func getHeightMapOfImage(img image.Image, upper float32, right float32, lower fl
 	1Pixel = 0.00083333333
 */
 func tiffToImage() image.Image {
-	file, err := os.Open("C:/Users/maxgt/go/src/LandscapeToStlConverter/Backend/srtm/srtm_38_03/srtm_38_03.tif")
+	file, err := os.Open("./srtm/srtm_38_03/srtm_38_03.tif")
 	if err != nil {
 		fmt.Println(err)
 		return nil
