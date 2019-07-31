@@ -8,6 +8,20 @@ import (
 	"os"
 )
 
+type STRL struct {
+	name   string
+	top    float32
+	right  float32
+	bottom float32
+	left   float32
+}
+
+var strlMaps = [...]STRL{
+	{"srtm_38_03", 50.0, 10.0, 45.0, 5.0},
+	{"srtm_38_02", 55.0, 10.0, 50.0, 5.0},
+	{"srtm_39_02", 55.0, 15.0, 50.0, 10.0},
+	{"srtm_39_03", 50.0, 15.0, 45.0, 10.0}}
+
 func main() {
 	img := tiffToImage()
 
