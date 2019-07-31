@@ -3,8 +3,8 @@ package lib
 import (
 	"bytes"
 	"encoding/binary"
-	"github.com/golang/geo/r3"
 	"fmt"
+	"github.com/golang/geo/r3"
 	//"golang.org/x/image/math/f32"
 	//"encoding/binary"
 	. "github.com/go-gl/mathgl/mgl32"
@@ -13,13 +13,78 @@ import (
 	"os"
 )
 
-const MapHeight = 20.0
+const MapHeight = 2.0
+const ProfileHeight = 5.0
+const ProfileThickness = 2.0
+const HeightFaktor = 12.0
 
 
 type triangle struct{
 	v1 Vec3
 	v2 Vec3
 	v3 Vec3
+}
+
+func GenerateSTLMapFromSideMap(sidemap []float32, sizeInMM uint32){
+	var step float32
+	size :=float32(sizeInMM)
+	step = size / float32(len(sidemap)-1)
+	heightstep := step / HeightFaktor
+	c1:= Vec3{0,0,0}
+	c2:= Vec3{ProfileHeight,0, 0}
+	c3:= Vec3{ProfileHeight,size, 0}
+	c4:= Vec3{0,size, 0}
+	c5:= Vec3{0,0, ProfileThickness}
+	c6:= Vec3{ProfileHeight,0, ProfileThickness}
+	c7:= Vec3{ProfileHeight,size, ProfileThickness}
+	c8:= Vec3{0,size, ProfileThickness}
+
+	ct1 := triangle{c1, c2,c3}
+	ct2 := triangle{c1, c3,c4}
+	ct3 := triangle{c5, c6,c7}
+	ct4 := triangle{c5, c7,c8}
+
+	ct5 := triangle{c1, c5,c6}
+	ct6 := triangle{c1, c6,c2}
+	ct7 := triangle{c3, c7,c8}
+	ct8 := triangle{c3, c8,c4}
+	ct9 := triangle{c4, c8,c5}
+	ct10 := triangle{c4, c5,c1}
+
+	var triangles []triangle
+
+	triangles = append(triangles, ct1,ct2,ct3,ct4,ct5,ct6,ct7,ct8,ct9,ct10)
+	for i:= 0 ; i< len(sidemap); i++ {
+		v1 := Vec3{sidemap[i]*heightstep+ProfileHeight, float32(i) * step, 0}
+		v3 := Vec3{sidemap[i]*heightstep+ProfileHeight, float32(i) * step, ProfileThickness}
+		v5 := Vec3{ProfileHeight, float32(i) * step,0}
+		v7 := Vec3{ProfileHeight, float32(i) * step, ProfileThickness}
+		if (i != len(sidemap)-1){
+			v2 := Vec3{sidemap[i+1]*heightstep+ProfileHeight, float32(i+1) * step , 0}
+			v4 := Vec3{sidemap[i+1]*heightstep+ProfileHeight, float32(i+1) * step, ProfileThickness}
+			v6 := Vec3{ProfileHeight, float32(i+1) * step, 0}
+			v8 := Vec3{ProfileHeight, float32(i+1) * step, ProfileThickness}
+
+			t1 := triangle{v1,v3,v4}
+			t2 := triangle{v1,v4,v2}
+			t3 := triangle{v1,v2,v6}
+			t4 := triangle{v1,v6,v5}
+			t5 := triangle{v3,v4,v8}
+			t6 := triangle{v3,v8,v7}
+			triangles = append(triangles, t1,t2,t3,t4,t5,t6)
+		}
+		if(i == 0){
+			ct1 := triangle{v1, v5, v7}
+			ct2 := triangle{v1, v7,v3}
+			triangles = append(triangles, ct1,ct2)
+		}
+		if (i == len(sidemap) -1){
+			ct3:= triangle{v1,v3,v7}
+			ct4:= triangle{v1,v7,v5}
+			triangles = append (triangles, ct3,ct4)
+		}
+	}
+	generateSTLMapFromTriangles(triangles)
 }
 
 func GenerateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32){
@@ -46,11 +111,9 @@ func GenerateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32){
 	ct10 := triangle{c4,c5,c1}//left
 
 	step = size / float32(len(heightMap)-1)
-	heightstep := step /15
+	heightstep := step / HeightFaktor
 	var triangles []triangle
 	triangles = append(triangles, ct1,ct2,ct3,ct4,ct5,ct6,ct7,ct8,ct9,ct10)
-	fmt.println("Triangles")
-	fmt.pro
 	for i := 0; i< len(heightMap); i++ {
 		for j := 0; j<len(heightMap[0]) ; j++ {
 			v1 := Vec3{float32(i) * step, float32(j) * step, heightMap[i][j]*heightstep + MapHeight}

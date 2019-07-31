@@ -22,28 +22,42 @@ func main() {
 	fmt.Println(heightMap[0][5999])
 	fmt.Println(heightMap[5999][5999])
 	fmt.Println(heightMap[5999][0])
-	size := 6000
+	size := 100
 	heightMap2 := make([][]float32, size)
 	for i := range heightMap2 {
 		heightMap2[i] = make([]float32, size)
 	}
-	max := heightMap[0][0]
+	min := heightMap[0][0]
 	for i:=0; i<size; i++{
 		for j := 0 ; j < size; j++ {
 			heightMap2[i][j] = heightMap[i][j]
-			if heightMap2[i][j] < max{
-				max = heightMap2[i][j]
+			if heightMap2[i][j] < min {
+				min = heightMap2[i][j]
 			}
 		}
 	}
 	for i:=0; i<size; i++{
 		for j := 0 ; j < size; j++ {
-			heightMap2[i][j] = heightMap2[i][j] - max
+			heightMap2[i][j] = heightMap2[i][j] - min
 		}
 	}
 
+	sideMap := make ( []float32, size)
+	min = heightMap[0][0]
+	for i := 0; i < size; i++ {
+		sideMap[i] = heightMap[i+300][0]
+		if sideMap[i] < min {
+			min = sideMap[i]
+		}
+	}
+	for i := 0; i < size; i++ {
+		sideMap[i] = sideMap[i] - min
+
+	}
+
 	fmt.Println("start generating")
-	Stl.GenerateSTLMapFromHeightMap(heightMap2, 5000)
+	Stl.GenerateSTLMapFromSideMap(sideMap, 50)
+	//Stl.GenerateSTLMapFromHeightMap(heightMap2, 20)
 
 }
 
