@@ -27,7 +27,7 @@ func main() {
 	// TODO change to console params
 	var top float32 = 55.0
 	var right float32 = 15.0
-	var bottom float32 = 45.0
+	var bottom float32 = 52.0
 	var left float32 = 11.0
 
 	heightMap := getHeightMap(top, right, bottom, left)
@@ -118,12 +118,12 @@ func getHeight(x float32, y float32, xScale float32, yScale float32, maxLeft flo
 }
 
 func getNeededImage(x float32, y float32, xScale float32, yScale float32, maxLeft float32, maxBottom float32) (neededImage image.Image) {
-	xCoordinate := x*xScale + maxLeft
-	yCoordinate := y*yScale + maxBottom
+	xCoordinate := y*yScale + maxLeft
+	yCoordinate := x*xScale + maxBottom
 
 	//fmt.Printf("xCoor: %f, yCoord: %f", xCoordinate, yCoordinate)
 	for _, strmMap := range strmMaps {
-		//fmt.Printf("top: %f, right: %f, bottom: %f, left: %f\n", strmMap.top, strmMap.right, strmMap.bottom, strmMap.left)
+		//fmt.Printf("top: %f, right: %f, bottom: %f, left: %f, %d \n", strmMap.top, strmMap.right, strmMap.bottom, strmMap.left, i)
 		if strmMap.top >= yCoordinate && strmMap.right >= xCoordinate && strmMap.bottom <= yCoordinate && strmMap.left <= xCoordinate {
 			return strmMap.image
 		}
