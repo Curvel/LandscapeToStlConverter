@@ -1,16 +1,34 @@
+// Loaded
 $(document).ready(function() {
     'use strict';
 
     console.log('main.js ready() fired!');
 
-    $("#form").on("submit", function(){
-        event.preventDefault();
+    // Enable the InputSpinner for all inputs with type='number'
+    //$("input[type='number']").inputSpinner();
+
+    $('#form').on('submit', function( e ){
+        e.preventDefault();
         printLandscape.handleGenerateButtonPressed();
-    })
+    });
+
+    $('#download').on('click', function( e ){
+        printLandscape.downloadLastFile();
+    });
 });
 
-
+// App
 var printLandscape = (function PrintLandscape() {
+
+    const status = {
+        IDLE: 'idle',
+        IN_PROGRESS: 'in_progress',
+        SUCCESS: 'success',
+        FAILED: 'failed'
+    }
+
+    var socket;
+    var lastFileUrl;
 
     // Private member
     var validateInputFields = function( fields ) {
@@ -51,23 +69,116 @@ var printLandscape = (function PrintLandscape() {
         return true;
     };
 
+    var setStatus = function( current ) {
+        switch( current ) {
+            case status.IDLE:
+                $('#submit').prop('disabled', false);
+                $('#progressbar').attr('hidden','');
+                $('#alert').attr('hidden','');
+                break;
+            case status.IN_PROGRESS:
+                $('#submit').prop('disabled', true);
+                $('#progressbar').removeAttr('hidden');
+                break;
+            case status.SUCCESS:
+                $('#submit').prop('disabled', false);
+                $('#download').removeAttr('hidden');
+                break;
+            case status.FAILED:
+                $('#submit').prop('disabled', false);
+                $('#alert').removeAttr('hidden');
+                break;
+        }
+    };
+
+    var submitRequest = function( data ) {       
+        socket = io.connect('http://127.0.0.1:4321', {
+            reconnection: false
+        });
+        socket.on('error', console.error.bind(console));
+        socket.on('message', console.log.bind(console));
+
+        socket.on('convertUpdate', function (data) {
+            console.log(data);
+
+            var percentage = data.split(';');
+            convertUpdate(percentage[0], percentage[1], percentage[2]);
+        });
+        socket.on('convertSuccess', function (data) {
+            console.log(data);
+            setStatus(status.SUCCESS);
+
+            lastFileUrl = data;
+
+            socket.disconnect();
+        });
+        socket.on('convertFailed', function (data) {
+            console.log(data);
+            setStatus(status.FAILED);
+
+            socket.disconnect();
+        });
+
+        socket.emit('requestConvert', {data: data, id: 'unused'});
+    };
+
+    // Progress
+    var convertUpdate = function( percentage1, percentage2, percentage3 ) {
+
+        setPartPercentage('#progressbarStep1', 'Generate height map...', percentage1);
+        setPartPercentage('#progressbarStep2', 'Triangulation...', percentage2);
+        setPartPercentage('#progressbarStep3', 'STL generation...', percentage3);
+    };
+    var setPartPercentage = function( elementSelector, title, totalPercentage ) {
+        if ( totalPercentage && totalPercentage > 0 ) {
+
+            var partPerventage = Math.round(totalPercentage / 3);
+
+            // Workaround for third bar
+            if (partPerventage == 33 && elementSelector == '#progressbarStep3')
+                partPerventage = 34;
+
+            console.log(partPerventage + ' of ' + elementSelector);
+            $(elementSelector).text(title + ' ' + totalPercentage + '%');
+            $(elementSelector).width(partPerventage + "%");
+        }
+    };
+
+    var tryToDownloadLastFile = function() {
+        if ( lastFileUrl ) {
+            //window.open(lastFileUrl, '_blank');
+            alert('Redirect to: ' + lastFileUrl);
+        } else {
+            alert('None file generated yet.');
+        }
+    };
+
     return {
         // Public member
         handleGenerateButtonPressed: function() {
-            var fields = $("#form").serializeArray();
+            setStatus(status.IDLE);
+
+            var fields = $('#form').serializeArray();
             //JSON.stringify(fields);
             
-            if ( !validateInputFields(fields) ) {
-                alert('invalid')
+            /* if ( !validateInputFields(fields) ) {
+                alert('Validation failed.')
                 return;
-            }
+            } */
 
-            alert('valid');
+            console.log('Validation passed.');
+
+            setStatus(status.IN_PROGRESS);
+            submitRequest();
+        },
+        downloadLastFile: function() {
+            tryToDownloadLastFile();
         }
     };
 
 })();
 
+// Google Maps
 var mapsIntegration = (function MapsIntegraion() {
     var map;
     return {
