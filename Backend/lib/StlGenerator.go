@@ -154,8 +154,11 @@ func GenerateSettlerOfCatan(heightMap [][]float32, sizeInMM uint32){
 	t62 := triangle{c6,c12,c7}
 
 	triangles = append(triangles, t1,t2,t3,t4,t11,t12,t21,t22,t31,t32,t41,t42,t51,t52,t61,t62)
-	for x := 0; x < squareLength; x++ {
 
+
+	for x := 0; x < squareLength; x++ {
+		percentage:= int((float32(x)/float32(squareLength))*100)
+		fmt.Printf("100;%d;0\n", percentage)
 		offset  = getCatanOffset(x, squareLength, stepsPerRow)
 		for y:= startPosRowOne-offset; y < startPosRowOne + sideLength + offset ; y++{
 			v1 := Vec3{float32(x) * stepX, float32(y) * stepY, heightMap[x][y]*heightstep + MapHeight}
@@ -367,6 +370,8 @@ func GenerateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32){
 	var triangles []triangle
 	triangles = append(triangles, ct1,ct2,ct3,ct4,ct5,ct6,ct7,ct8,ct9,ct10)
 	for i := 0; i< len(heightMap); i++ {
+		percentage:= int((float32(i)/float32(len(heightMap)))*100)
+		fmt.Printf("100;100;%d\n", percentage)
 		for j := 0; j<len(heightMap[0]) ; j++ {
 			v1 := Vec3{float32(i) * stepX, float32(j) * stepY, heightMap[i][j]*heightstep + MapHeight}
 			if i < len(heightMap)-1 && j < len(heightMap[0])-1 {
