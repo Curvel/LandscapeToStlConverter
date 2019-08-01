@@ -568,8 +568,7 @@ func writeStringToFile(s string) {
 }
 
 func writeByteToFile(b []byte, fileName string) {
-	completeFileName := fmt.Sprintf("%s.stl", fileName)
-	f, err := os.Create(completeFileName)
+	f, err := os.Create(fileName)
 	if err != nil {
 		fmt.Println(err)
 		return

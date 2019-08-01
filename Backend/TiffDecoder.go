@@ -49,8 +49,8 @@ func main() {
 	var fileName = *fileNameFlag
 	var heightFactor = float32(*heightFactorFlag)
 
-	fmt.Printf("naLat: %f, neLang: %f, swLat: %f, swLng: %f, model: %s, cropping: %s, length: %d, name: %s, height: %f",
-		top, right, bottom, left, modelType, cropping, length, fileName, heightFactor)
+	//fmt.Printf("naLat: %f, neLang: %f, swLat: %f, swLng: %f, model: %s, cropping: %s, length: %d, name: %s, height: %f",
+	//	top, right, bottom, left, modelType, cropping, length, fileName, heightFactor)
 
 	var mErr error
 
