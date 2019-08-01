@@ -87,7 +87,8 @@ func GenerateSTLMapFromSideMap(sidemap []float32, sizeInMM uint32){
 }
 
 func GenerateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32){
-	var step float32
+	var stepX float32
+	var stepY float32
 	size := float32(sizeInMM)
 	c1 := Vec3{0, 0, 0}               //bottom up left
 	c2 := Vec3{size, 0, 0}            //bottom up right
@@ -109,63 +110,64 @@ func GenerateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32){
 	ct9 := triangle{c4, c8, c5}  //left
 	ct10 := triangle{c4, c5, c1} //left
 
-	step = size / float32(len(heightMap)-1)
-	heightstep := step / HeightFaktor
+	stepX = size / float32(len(heightMap)-1)
+	stepY = size / float32(len(heightMap[0])-1)
+	heightstep := (stepX + stepY) / (HeightFaktor * 2)
 	var triangles []triangle
 	triangles = append(triangles, ct1,ct2,ct3,ct4,ct5,ct6,ct7,ct8,ct9,ct10)
 	for i := 0; i< len(heightMap); i++ {
 		for j := 0; j<len(heightMap[0]) ; j++ {
-			v1 := Vec3{float32(i) * step, float32(j) * step, heightMap[i][j]*heightstep + MapHeight}
+			v1 := Vec3{float32(i) * stepX, float32(j) * stepY, heightMap[i][j]*heightstep + MapHeight}
 			if i < len(heightMap)-1 && j < len(heightMap[0])-1 {
-				v2 := Vec3{float32(i+1) * step, float32(j) * step, heightMap[i+1][j]*heightstep + MapHeight}
-				v3 := Vec3{float32(i) * step, float32(j+1) * step, heightMap[i][j+1]*heightstep + MapHeight}
-				v4 := Vec3{float32(i+1) * step, float32(j+1) * step, heightMap[i+1][j+1]*heightstep + MapHeight}
+				v2 := Vec3{float32(i+1) * stepX, float32(j) * stepY, heightMap[i+1][j]*heightstep + MapHeight}
+				v3 := Vec3{float32(i) * stepX, float32(j+1) * stepY, heightMap[i][j+1]*heightstep + MapHeight}
+				v4 := Vec3{float32(i+1) * stepX, float32(j+1) * stepY, heightMap[i+1][j+1]*heightstep + MapHeight}
 				t1 := triangle{v1, v2, v4}
 				t2 := triangle{v1, v4, v3}
 				triangles = append(triangles, t1, t2)
 			}
-			if i == 0 && heightMap[i][j]*step != 0 {
+			if i == 0 && heightMap[i][j] != 0 {
 				vd := Vec3{v1.X(), v1.Y(), MapHeight}
 				if j < len(heightMap[0])-1 {
-					vr := Vec3{v1.X(), v1.Y() + step, MapHeight}
+					vr := Vec3{v1.X(), v1.Y() + stepY, MapHeight}
 					triangles = append(triangles, triangle{v1, vd, vr})
 				}
 				if j > 0 {
-					vl := Vec3{v1.X(), v1.Y() - step, heightMap[i][j-1]*heightstep + MapHeight}
+					vl := Vec3{v1.X(), v1.Y() - stepY, heightMap[i][j-1]*heightstep + MapHeight}
 					triangles = append(triangles, triangle{v1, vl, vd})
 				}
 			}
-			if i == len(heightMap)-1 && heightMap[i][j]*step != 0 {
+			if i == len(heightMap)-1 && heightMap[i][j] != 0 {
 				vd := Vec3{v1.X(), v1.Y(), MapHeight}
 				if j < len(heightMap[0])-1 {
-					vr := Vec3{v1.X(), v1.Y() + step, MapHeight}
+					vr := Vec3{v1.X(), v1.Y() + stepY, MapHeight}
 					triangles = append(triangles, triangle{v1, vr, vd})
 				}
 				if j > 0 {
-					vl := Vec3{v1.X(), v1.Y() - step, heightMap[i][j-1]*heightstep + MapHeight} //falsch
+					vl := Vec3{v1.X(), v1.Y() - stepY, heightMap[i][j-1]*heightstep + MapHeight} //falsch
 					triangles = append(triangles, triangle{v1, vd, vl})
 				}
 			}
-			if j == 0 && heightMap[i][j]*step != 0 {
+			if j == 0 && heightMap[i][j] != 0 {
 				vd := Vec3{v1.X(), v1.Y(), MapHeight}
 				if i < len(heightMap)-1 {
-					vr := Vec3{v1.X() + step, v1.Y(), MapHeight}
+					vr := Vec3{v1.X() + stepX, v1.Y(), MapHeight}
 					triangles = append(triangles, triangle{v1, vd, vr})
 				}
 				if i > 0 {
-					vl := Vec3{v1.X() - step, v1.Y(), heightMap[i-1][j]*heightstep + MapHeight}
+					vl := Vec3{v1.X() - stepX, v1.Y(), heightMap[i-1][j]*heightstep + MapHeight}
 					triangles = append(triangles, triangle{v1, vl, vd})
 				}
 			}
 
-			if j == len(heightMap[0])-1 && heightMap[i][j]*step != 0 {
+			if j == len(heightMap[0])-1 && heightMap[i][j] != 0 {
 				vd := Vec3{v1.X(), v1.Y(), MapHeight}
 				if i < len(heightMap)-1 {
-					vr := Vec3{v1.X() + step, v1.Y(), MapHeight}
+					vr := Vec3{v1.X() + stepX, v1.Y(), MapHeight}
 					triangles = append(triangles, triangle{v1, vr, vd})
 				}
 				if i > 0 {
-					vl := Vec3{v1.X() - step, v1.Y(), heightMap[i-1][j]*heightstep + MapHeight} //falsch
+					vl := Vec3{v1.X() - stepX, v1.Y(), heightMap[i-1][j]*heightstep + MapHeight} //falsch
 					triangles = append(triangles, triangle{v1, vd, vl})
 				}
 			}

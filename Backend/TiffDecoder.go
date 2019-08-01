@@ -26,14 +26,14 @@ var strmMaps = [...]STRM{
 
 func main() {
 	// TODO change to console params
-	var top float32 = 49.27
-	var right float32 = 8.55
-	var bottom float32 = 48.91
-	var left float32 = 8.19
+	var top float32 = 50.1
+	var right float32 = 8.25
+	var bottom float32 = 49.85
+	var left float32 = 7.7
 
 	heightMap := getHeightMap(top, right, bottom, left)
 
-	Stl.GenerateSTLMapFromHeightMap(heightMap, 50)
+	Stl.GenerateSTLMapFromHeightMap(heightMap, 150)
 
 }
 
@@ -107,8 +107,21 @@ func getHeightMap(top float32, right float32, bottom float32, left float32) [][]
 			heightMap[yHeightMap][xHeightMap] = float32(height)
 		}
 	}
+	
+	return flipMapX(heightMap)
+}
 
-	return heightMap
+func flipMapX(heightMap [][]float32) [][]float32{
+	flippedMap := make([][]float32, len(heightMap))
+	for i := range flippedMap {
+		flippedMap[i] = make([]float32, len(heightMap[0]))
+	}
+	for i := 0; i < len(heightMap); i++{
+		for j := 0; j < len(heightMap[0]); j++{
+			flippedMap[i][(len(heightMap[0])-1) - j] = heightMap[i][j]
+		}
+	}
+	return flippedMap
 }
 
 func getHeight(x int, y int, xScale float32, yScale float32, maxLeft float32, maxBottom float32) uint32 {
