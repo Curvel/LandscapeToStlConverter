@@ -310,7 +310,7 @@ func writeByteToFile(b []byte, fileName string) {
 		f.Close()
 		return
 	}
-	fmt.Println(l, "bytes written successfully")
+	//fmt.Println(l, "bytes written successfully")
 	err = f.Close()
 	if err != nil {
 		fmt.Println(err)

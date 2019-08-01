@@ -49,6 +49,9 @@ func main() {
 	var fileName = *fileNameFlag
 	var heightFactor = float32(*heightFactorFlag)
 
+	fmt.Printf("naLat: %f, neLang: %f, swLat: %f, swLng: %f, model: %s, cropping: %s, length: %d, name: %s, height: %f",
+		top, right, bottom, left, modelType, cropping, length, fileName, heightFactor)
+
 	heightMap, err := getHeightMap(top, right, bottom, left)
 
 	if heightMap != nil {
@@ -104,12 +107,12 @@ func getHeightMap(top float32, right float32, bottom float32, left float32) ([][
 		return nil, errors.New("selection out of range")
 	}
 
-	fmt.Println("0")
+	fmt.Println("0;0;0")
 	err := loadImagesForRange(top, right, bottom, left)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("10")
+	fmt.Println("10;0;0")
 	maxTop, maxRight, maxBottom, maxLeft := getMaxBorders()
 
 	imgXPoints := 6000 * ((maxTop - maxBottom) / 5)
@@ -133,7 +136,8 @@ func getHeightMap(top float32, right float32, bottom float32, left float32) ([][
 	yOffset := int(-(maxBottom - bottom) / yScale)
 	xOffset := int(-(maxLeft - left) / xScale)
 	for yHeightMap := 0; yHeightMap < ySize; yHeightMap++ {
-		fmt.Println(int(10 + ((float32(yHeightMap) / float32(ySize)) * 85))) // percent
+		percentage := int(10 + ((float32(yHeightMap) / float32(ySize)) * 85))
+		fmt.Printf("%d;0;0\n", percentage) // percent
 		for xHeightMap := 0; xHeightMap < xSize; xHeightMap++ {
 			xImg := yOffset + yHeightMap
 			yImg := xOffset + xHeightMap
@@ -147,7 +151,7 @@ func getHeightMap(top float32, right float32, bottom float32, left float32) ([][
 		}
 	}
 
-	fmt.Println("95")
+	fmt.Println("95;0;0")
 	return flipMapX(heightMap), nil
 }
 
@@ -161,7 +165,7 @@ func flipMapX(heightMap [][]float32) [][]float32{
 			flippedMap[i][(len(heightMap[0])-1) - j] = heightMap[i][j]
 		}
 	}
-	fmt.Println("100")
+	fmt.Println("100;0;0")
 	return flippedMap
 }
 
