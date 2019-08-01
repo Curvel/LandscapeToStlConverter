@@ -2,6 +2,7 @@ package main
 
 import (
 	Stl "./lib"
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/go-gl/mathgl/mgl32"
@@ -46,14 +47,22 @@ func main() {
 	var length = *lengthFlag
 	var _ = *heightFactorFlag
 
-	heightMap := getHeightMap(top, right, bottom, left)
+	heightMap, err := getHeightMap(top, right, bottom, left)
 
-	if modelType == "surface" {
-		if cropping == "sqr" {
-			Stl.GenerateSTLMapFromHeightMap(heightMap, uint32(length))
+	if heightMap != nil {
+		if modelType == "surface" {
+			if cropping == "sqr" {
+				Stl.GenerateSTLMapFromHeightMap(heightMap, uint32(length))
+			}
 		}
 	}
 
+	if err == nil {
+		os.Exit(0)
+	} else {
+		fmt.Print(err)
+		os.Exit(1)
+	}
 }
 
 func getMaxBorders() (maxTop float32, maxRight float32, maxBottom float32, maxLeft float32) {
@@ -86,13 +95,16 @@ func isSelectionInRange(top float32, right float32, bottom float32, left float32
 	return top <= maxTop && right <= maxRight && left >= maxLeft && bottom >= maxBottom
 }
 
-func getHeightMap(top float32, right float32, bottom float32, left float32) [][]float32 {
+func getHeightMap(top float32, right float32, bottom float32, left float32) ([][]float32, error){
 
 	if !isSelectionInRange(top, right, bottom, left) {
-		panic("Selection out of range!")
+		return nil, errors.New("selection out of range")
 	}
 
-	loadImagesForRange(top, right, bottom, left)
+	err := loadImagesForRange(top, right, bottom, left)
+	if err != nil {
+		return nil, err
+	}
 
 	maxTop, maxRight, maxBottom, maxLeft := getMaxBorders()
 
@@ -121,13 +133,16 @@ func getHeightMap(top float32, right float32, bottom float32, left float32) [][]
 			xImg := yOffset + yHeightMap
 			yImg := xOffset + xHeightMap
 
-			height := getHeight(xImg, yImg, xScale, yScale, maxLeft, maxBottom)
+			height, err := getHeight(xImg, yImg, xScale, yScale, maxLeft, maxBottom)
+			if err != nil {
+				return nil, err
+			}
 
 			heightMap[yHeightMap][xHeightMap] = float32(height)
 		}
 	}
 	
-	return flipMapX(heightMap)
+	return flipMapX(heightMap), nil
 }
 
 func flipMapX(heightMap [][]float32) [][]float32{
@@ -143,17 +158,20 @@ func flipMapX(heightMap [][]float32) [][]float32{
 	return flippedMap
 }
 
-func getHeight(x int, y int, xScale float32, yScale float32, maxLeft float32, maxBottom float32) uint32 {
-	imageNeeded := getNeededImage(x, y, xScale, yScale, maxLeft, maxBottom)
+func getHeight(x int, y int, xScale float32, yScale float32, maxLeft float32, maxBottom float32) (uint32, error) {
+	img, err := getNeededImage(x, y, xScale, yScale, maxLeft, maxBottom)
+	if err != nil {
+		return 0, err
+	}
 
-	r, _, _, _ := imageNeeded.At((y%6000), 5999 - (x%6000)).RGBA()
+	r, _, _, _ := img.At((y%6000), 5999 - (x%6000)).RGBA()
 	if r > 10000 {
 		r = 0
 	}
-	return r
+	return r, nil
 }
 
-func getNeededImage(x int, y int, xScale float32, yScale float32, maxLeft float32, maxBottom float32) (neededImage image.Image) {
+func getNeededImage(x int, y int, xScale float32, yScale float32, maxLeft float32, maxBottom float32) (image.Image, error) {
 	xCoordinate := float32(y)*yScale + maxLeft
 	yCoordinate := float32(x)*xScale + maxBottom
 
@@ -161,36 +179,38 @@ func getNeededImage(x int, y int, xScale float32, yScale float32, maxLeft float3
 	for _, strmMap := range strmMaps {
 		//fmt.Printf("top: %f, right: %f, bottom: %f, left: %f, %d \n", strmMap.top, strmMap.right, strmMap.bottom, strmMap.left, i)
 		if strmMap.top > yCoordinate && strmMap.right > xCoordinate && strmMap.bottom <= yCoordinate && strmMap.left <= xCoordinate {
-			return strmMap.image
+			return strmMap.image, nil
 		}
 	}
 
-	panic("Needed Image was not loaded!")
+	return nil, errors.New("needed image was not loaded")
 }
 
-func loadImagesForRange(top float32, right float32, bottom float32, left float32) {
+func loadImagesForRange(top float32, right float32, bottom float32, left float32) error {
 	for i, m := range strmMaps {
 		if bottom <= m.top && top >= m.bottom && left <= m.right && right >= m.left {
-			img := srtmTiffToImage(m.name)
+			img, err := srtmTiffToImage(m.name)
+			if err != nil {
+				return err
+			}
 			strmMaps[i].image = img
 		}
 	}
+	return nil
 }
 
-func srtmTiffToImage(name string) image.Image {
+func srtmTiffToImage(name string) (image.Image, error) {
 	uri := fmt.Sprintf("./srtm/%s/%s.tif", name, name)
 
 	file, err := os.Open(uri)
 	if err != nil {
-		fmt.Println(err)
-		return nil
+		return nil, err
 	}
 
 	img, err := tiff.Decode(file)
 	if err != nil {
-		fmt.Println(err)
-		return nil
+		return nil, err
 	}
 
-	return img
+	return img, nil
 }
