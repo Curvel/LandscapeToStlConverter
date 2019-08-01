@@ -1,0 +1,1 @@
+docker exec -it container-stl-frontend /bin/sh

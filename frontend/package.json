@@ -1,0 +1,19 @@
+{
+  "name": "landscape-to-stl-coverter",
+  "version": "1.0.0",
+  "description": "LandscapeToStlConverter",
+  "repository": "https://github.com/Curvel/LandscapeToStlConverter.git",
+  "author": "HSKA",
+  "license": "MIT",
+  "main": "app.js",
+  "keywords": [
+    "nodejs",
+    "bootstrap",
+    "express"
+  ],
+  "dependencies": {
+    "child_process": "^1.0.2",
+    "express": "^4.17.1",
+    "socket.io": "^2.2.0"
+  }
+}
