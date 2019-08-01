@@ -1,7 +1,8 @@
 package main
 
 import (
-	Stl "LandscapeToStlConverter/Backend/lib"
+	Stl "./lib"
+	"flag"
 	"fmt"
 	"github.com/go-gl/mathgl/mgl32"
 	"golang.org/x/image/tiff"
@@ -24,16 +25,34 @@ var strmMaps = [...]STRM{
 	{"srtm_39_02", 55.0, 15.0, 50.0, 10.0, nil},
 	{"srtm_39_03", 50.0, 15.0, 45.0, 10.0, nil}}
 
+var topFlag = flag.Float64("neLat", 10000.0, "top coordinate of selected area")
+var rightFlag = flag.Float64("neLng", 10000.0, "right coordinate of selected area")
+var bottomFlag = flag.Float64("swLat", 10000.0, "bottom coordinate of selected area")
+var leftFlag = flag.Float64("swLng", 10000.0, "left coordinate of selected area")
+var modelTypeFlag = flag.String("model", "", "surface|section")
+var croppingFlag = flag.String("cropping", "", "sqr|hex|rnd")
+var lengthFlag = flag.Int("length", 0, "length of the largest side in mm")
+var heightFactorFlag = flag.Float64("heightFactor", 0.0, "smaller is bigger")
+
 func main() {
-	// TODO change to console params
-	var top float32 = 50.1
-	var right float32 = 8.25
-	var bottom float32 = 49.85
-	var left float32 = 7.7
+	flag.Parse()
+
+	var top = float32(*topFlag)
+	var right = float32(*rightFlag)
+	var bottom = float32(*bottomFlag)
+	var left = float32(*leftFlag)
+	var modelType = *modelTypeFlag
+	var cropping = *croppingFlag
+	var length = *lengthFlag
+	var _ = *heightFactorFlag
 
 	heightMap := getHeightMap(top, right, bottom, left)
 
-	Stl.GenerateSTLMapFromHeightMap(heightMap, 150)
+	if modelType == "surface" {
+		if cropping == "sqr" {
+			Stl.GenerateSTLMapFromHeightMap(heightMap, uint32(length))
+		}
+	}
 
 }
 
@@ -159,7 +178,7 @@ func loadImagesForRange(top float32, right float32, bottom float32, left float32
 }
 
 func srtmTiffToImage(name string) image.Image {
-	uri := fmt.Sprintf("C:/Users/maxgt/go/src/LandscapeToStlConverter/Backend/srtm/%s/%s.tif", name, name)
+	uri := fmt.Sprintf("./srtm/%s/%s.tif", name, name)
 
 	file, err := os.Open(uri)
 	if err != nil {
