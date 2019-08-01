@@ -33,6 +33,7 @@ var leftFlag = flag.Float64("swLng", 10000.0, "left coordinate of selected area"
 var modelTypeFlag = flag.String("model", "", "surface|section")
 var croppingFlag = flag.String("cropping", "", "sqr|hex|rnd")
 var lengthFlag = flag.Int("length", 0, "length of the largest side in mm")
+var fileNameFlag = flag.String("name", "", "name of the stl file")
 var heightFactorFlag = flag.Float64("heightFactor", 0.0, "smaller is bigger")
 
 func main() {
@@ -45,14 +46,18 @@ func main() {
 	var modelType = *modelTypeFlag
 	var cropping = *croppingFlag
 	var length = *lengthFlag
-	var _ = *heightFactorFlag
+	var fileName = *fileNameFlag
+	var heightFactor = float32(*heightFactorFlag)
+
+	fmt.Printf("naLat: %f, neLang: %f, swLat: %f, swLng: %f, model: %s, cropping: %s, length: %d, name: %s, height: %f",
+		top, right, bottom, left, modelType, cropping, length, fileName, heightFactor)
 
 	heightMap, err := getHeightMap(top, right, bottom, left)
 
 	if heightMap != nil {
 		if modelType == "surface" {
 			if cropping == "sqr" {
-				Stl.GenerateSTLMapFromHeightMap(heightMap, uint32(length))
+				Stl.GenerateSTLMapFromHeightMap(heightMap, uint32(length), heightFactor, fileName)
 			}
 		}
 	}
@@ -121,16 +126,18 @@ func getProfileMap(top float32, right float32, bottom float32, left float32) []f
 
 
 func getHeightMap(top float32, right float32, bottom float32, left float32) ([][]float32, error){
+	//fmt.Println("Load HeightMap")
 
 	if !isSelectionInRange(top, right, bottom, left) {
 		return nil, errors.New("selection out of range")
 	}
 
+	fmt.Println("0;0;0")
 	err := loadImagesForRange(top, right, bottom, left)
 	if err != nil {
 		return nil, err
 	}
-
+	fmt.Println("10;0;0")
 	maxTop, maxRight, maxBottom, maxLeft := getMaxBorders()
 
 	imgXPoints := 6000 * ((maxTop - maxBottom) / 5)
@@ -144,7 +151,7 @@ func getHeightMap(top float32, right float32, bottom float32, left float32) ([][
 	xSize := int( mgl32.Round((right - left) / xScale,0))
 	ySize := int( mgl32.Round((top - bottom) / yScale,0))
 
-	fmt.Printf("xSize: %d, ySize: %d\n", xSize, ySize)
+	//fmt.Printf("xSize: %d, ySize: %d\n", xSize, ySize)
 
 	heightMap := make([][]float32, ySize)
 	for i := range heightMap {
@@ -154,6 +161,8 @@ func getHeightMap(top float32, right float32, bottom float32, left float32) ([][
 	yOffset := int(-(maxBottom - bottom) / yScale)
 	xOffset := int(-(maxLeft - left) / xScale)
 	for yHeightMap := 0; yHeightMap < ySize; yHeightMap++ {
+		percentage := int(10 + ((float32(yHeightMap) / float32(ySize)) * 85))
+		fmt.Printf("%d;0;0\n", percentage) // percent
 		for xHeightMap := 0; xHeightMap < xSize; xHeightMap++ {
 			xImg := yOffset + yHeightMap
 			yImg := xOffset + xHeightMap
@@ -166,7 +175,8 @@ func getHeightMap(top float32, right float32, bottom float32, left float32) ([][
 			heightMap[yHeightMap][xHeightMap] = float32(height)
 		}
 	}
-	
+
+	fmt.Println("95;0;0")
 	return flipMapX(heightMap), nil
 }
 
@@ -180,6 +190,7 @@ func flipMapX(heightMap [][]float32) [][]float32{
 			flippedMap[i][(len(heightMap[0])-1) - j] = heightMap[i][j]
 		}
 	}
+	fmt.Println("100;0;0")
 	return flippedMap
 }
 
@@ -226,7 +237,6 @@ func loadImagesForRange(top float32, right float32, bottom float32, left float32
 
 func srtmTiffToImage(name string) (image.Image, error) {
 	uri := fmt.Sprintf("./srtm/%s/%s.tif", name, name)
-
 	file, err := os.Open(uri)
 	if err != nil {
 		return nil, err
