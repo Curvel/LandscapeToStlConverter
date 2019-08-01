@@ -52,20 +52,32 @@ func main() {
 	fmt.Printf("naLat: %f, neLang: %f, swLat: %f, swLng: %f, model: %s, cropping: %s, length: %d, name: %s, height: %f",
 		top, right, bottom, left, modelType, cropping, length, fileName, heightFactor)
 
-	heightMap, err := getHeightMap(top, right, bottom, left)
+	var mErr error
 
-	if heightMap != nil {
-		if modelType == "surface" {
+	if modelType == "surface" {
+		heightMap, err := getHeightMap(top, right, bottom, left)
+		mErr = err
+		if heightMap != nil {
 			if cropping == "sqr" {
 				Stl.GenerateSTLMapFromHeightMap(heightMap, uint32(length), heightFactor, fileName)
 			}
+			if cropping == "hex" {
+				Stl.GenerateSettlerOfCatan(heightMap, uint32(length), heightFactor, fileName)
+			}
+		}
+	}
+	if modelType == "section"{
+		profileMap, err := getProfileMap(top,right,bottom,left)
+			mErr = err
+		if profileMap != nil {
+			Stl.GenerateSTLMapFromSideMap(profileMap, uint32(length), heightFactor, fileName)
 		}
 	}
 
-	if err == nil {
+	if mErr == nil {
 		os.Exit(0)
 	} else {
-		fmt.Print(err)
+		fmt.Print(mErr)
 		os.Exit(1)
 	}
 }
@@ -100,8 +112,11 @@ func isSelectionInRange(top float32, right float32, bottom float32, left float32
 	return top <= maxTop && right <= maxRight && left >= maxLeft && bottom >= maxBottom
 }
 
-func getProfileMap(top float32, right float32, bottom float32, left float32) []float32{
-	heightMap:= getHeightMap(top, right, bottom, left)
+func getProfileMap(top float32, right float32, bottom float32, left float32) ([]float32, error){
+	heightMap, err:= getHeightMap(top, right, bottom, left)
+	if err != nil {
+		return nil,err
+	}
 	lengthX := float32(len(heightMap[0]))
 	lengthY := float32(len(heightMap))
 	var stepX  float32
@@ -120,7 +135,7 @@ func getProfileMap(top float32, right float32, bottom float32, left float32) []f
 	for i := 0; i < size-1; i++{
 		profileMap[i] = heightMap[int(float32(i)* stepY)][int(float32(i)*stepX)]
 	}
-	 return profileMap
+	 return profileMap, nil
 }
 
 

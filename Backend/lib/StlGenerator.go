@@ -24,7 +24,7 @@ type triangle struct {
 	v3 Vec3
 }
 
-func GenerateSTLMapFromSideMap(sidemap []float32, sizeInMM uint32, heightFactor float32, fileName string){
+
 /*func GenerateSTLMapFromSideMap(sidemap []float32, sizeInMM uint32){
 	var step float32
 	size :=float32(sizeInMM)
@@ -87,7 +87,7 @@ func GenerateSTLMapFromSideMap(sidemap []float32, sizeInMM uint32, heightFactor 
 	generateSTLMapFromTriangles(triangles)
 }*/
 
-func GenerateSTLMapFromSideMap(sideMap []float32, sizeInMM uint32) {
+func GenerateSTLMapFromSideMap(sideMap []float32, sizeInMM uint32, heightFactor float32, fileName string) {
 	thickness :=  int((ProfileThickness/ float32(sizeInMM)) * float32(len(sideMap)))
 
 	heightMap := make([][]float32, thickness)
@@ -100,10 +100,10 @@ func GenerateSTLMapFromSideMap(sideMap []float32, sizeInMM uint32) {
 		}
 	}
 
-	GenerateSTLMapFromHeightMap(heightMap, sizeInMM)
+	GenerateSTLMapFromHeightMap(heightMap, sizeInMM, heightFactor, fileName)
 
 }
-func GenerateSettlerOfCatan(heightMap [][]float32, sizeInMM uint32){
+func GenerateSettlerOfCatan(heightMap [][]float32, sizeInMM uint32, heightFactor float32, fileName string){
 	var offset int
 	var triangles []triangle
 	var stepX float32
@@ -119,7 +119,7 @@ func GenerateSettlerOfCatan(heightMap [][]float32, sizeInMM uint32){
 
 	stepX = size / float32(squareLength)
 	stepY = size / float32(squareLength)
-	heightstep := stepX /HeightFaktor
+	heightstep := stepX /heightFactor
 
 	c1 := Vec3{0,startPosRel, 0}
 	c2 := Vec3{0,size- startPosRel, 0}
@@ -319,7 +319,7 @@ func GenerateSettlerOfCatan(heightMap [][]float32, sizeInMM uint32){
 		}
 	}
 
-	generateSTLMapFromTriangles(triangles)
+	generateSTLMapFromTriangles(triangles, fileName)
 
 }
 
@@ -364,14 +364,14 @@ func GenerateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32, heightF
 	ct9 := triangle{c4, c8, c5}  //left
 	ct10 := triangle{c4, c5, c1} //left
 
-	heightstep := (stepX + stepY) / (heightFactor * 2)
 	stepY = sizeY / float32(len(heightMap[0])-1)
 	stepX = sizeX / float32(len(heightMap)-1)
+	heightstep := (stepX + stepY) / (heightFactor * 2)
 	var triangles []triangle
 	triangles = append(triangles, ct1,ct2,ct3,ct4,ct5,ct6,ct7,ct8,ct9,ct10)
 	for i := 0; i< len(heightMap); i++ {
 		percentage:= int((float32(i)/float32(len(heightMap)))*100)
-		fmt.Printf("100;100;%d\n", percentage)
+		fmt.Printf("100;%d;0\n", percentage)
 		for j := 0; j<len(heightMap[0]) ; j++ {
 			v1 := Vec3{float32(i) * stepX, float32(j) * stepY, heightMap[i][j]*heightstep + MapHeight}
 			if i < len(heightMap)-1 && j < len(heightMap[0])-1 {
@@ -451,11 +451,14 @@ func generateSTLMapFromTriangles(triangles []triangle, fileName string) {
 	triangleCount := convertLittleEndianInt(uint32(len(triangles)))
 	byteStl = append(byteStl, triangleCount...)
 	for i := 0; i < len(triangles); i++ {
+		percentage:= int((float32(i)/float32(len(triangles)))*100)
+		fmt.Printf("100;100;%d\n", percentage)
 
 		triangleByte := triangleToByte(triangles[i].v1, triangles[i].v2, triangles[i].v3, fileName)
 		byteStl = append(byteStl, triangleByte...)
 
 	}
+	fmt.Printf("100;100;100\n")
 
 	writeByteToFile(byteStl, fileName)
 }
@@ -571,7 +574,7 @@ func writeByteToFile(b []byte, fileName string) {
 		fmt.Println(err)
 		return
 	}
-	l, err := f.Write(b)
+	_, err = f.Write(b)
 	if err != nil {
 		fmt.Println(err)
 		f.Close()
