@@ -26,14 +26,17 @@ var strmMaps = [...]STRM{
 
 func main() {
 	// TODO change to console params
-	var top float32 = 50.1
-	var right float32 = 8.25
-	var bottom float32 = 49.85
+	var top float32 = 50.2
+	var right float32 = 8.2
+	var bottom float32 = 49.8
 	var left float32 = 7.7
 
 	heightMap := getHeightMap(top, right, bottom, left)
+	//profileMap := getProfileMap(top,right,bottom,left)
 
-	Stl.GenerateSTLMapFromHeightMap(heightMap, 150)
+	//Stl.GenerateSTLMapFromHeightMap(heightMap, 50)
+	//Stl.GenerateSTLMapFromSideMap(profileMap, 50)
+	Stl.GenerateSettlerOfCatan(heightMap, 50)
 
 }
 
@@ -66,6 +69,31 @@ func isSelectionInRange(top float32, right float32, bottom float32, left float32
 
 	return top <= maxTop && right <= maxRight && left >= maxLeft && bottom >= maxBottom
 }
+
+func getProfileMap(top float32, right float32, bottom float32, left float32) []float32{
+	heightMap:= getHeightMap(top, right, bottom, left)
+	lengthX := float32(len(heightMap[0]))
+	lengthY := float32(len(heightMap))
+	var stepX  float32
+	var stepY  float32
+	var size  int
+	if (lengthY > lengthX){
+		size = int(lengthY)
+		stepY = 1.0
+		stepX = lengthX / lengthY
+	} else {
+		size = int(lengthX)
+		stepX = 1.0
+		stepY = lengthY / lengthX
+	}
+	profileMap := make([]float32, size)
+	for i := 0; i < size-1; i++{
+		profileMap[i] = heightMap[int(float32(i)* stepY)][int(float32(i)*stepX)]
+	}
+	 return profileMap
+}
+
+
 
 func getHeightMap(top float32, right float32, bottom float32, left float32) [][]float32 {
 
@@ -107,7 +135,7 @@ func getHeightMap(top float32, right float32, bottom float32, left float32) [][]
 			heightMap[yHeightMap][xHeightMap] = float32(height)
 		}
 	}
-	
+
 	return flipMapX(heightMap)
 }
 

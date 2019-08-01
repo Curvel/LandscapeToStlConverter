@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"github.com/golang/geo/r3"
+	"math"
 	//"golang.org/x/image/math/f32"
 	//"encoding/binary"
 	. "github.com/go-gl/mathgl/mgl32"
@@ -15,8 +16,8 @@ import (
 
 const MapHeight = 2.0
 const ProfileHeight = 5.0
-const ProfileThickness = 2.0
-const HeightFaktor =10.0
+const ProfileThickness = 1
+const HeightFaktor =20.0
 
 type triangle struct {
 	v1 Vec3
@@ -24,7 +25,7 @@ type triangle struct {
 	v3 Vec3
 }
 
-func GenerateSTLMapFromSideMap(sidemap []float32, sizeInMM uint32){
+/*func GenerateSTLMapFromSideMap(sidemap []float32, sizeInMM uint32){
 	var step float32
 	size :=float32(sizeInMM)
 	step = size / float32(len(sidemap)-1)
@@ -84,20 +85,270 @@ func GenerateSTLMapFromSideMap(sidemap []float32, sizeInMM uint32){
 		}
 	}
 	generateSTLMapFromTriangles(triangles)
+}*/
+
+func GenerateSTLMapFromSideMap(sideMap []float32, sizeInMM uint32) {
+	thickness :=  int((ProfileThickness/ float32(sizeInMM)) * float32(len(sideMap)))
+
+	heightMap := make([][]float32, thickness)
+	for i:= range heightMap{
+		heightMap[i] = make ([]float32, len(sideMap))
+	}
+	for i := 0 ; i < thickness; i++ {
+		for j := 0 ; j < len(sideMap); j++ {
+			heightMap[i][j] = sideMap[j]
+		}
+	}
+
+	GenerateSTLMapFromHeightMap(heightMap, sizeInMM)
+
+}
+func GenerateSettlerOfCatan(heightMap [][]float32, sizeInMM uint32){
+	var offset int
+	var triangles []triangle
+	var stepX float32
+	var stepY float32
+	size := float32(sizeInMM)
+
+	heightMap = getSquareMap(heightMap)
+	squareLength := len(heightMap)
+	sideLength := int((float64(squareLength)/2)/ math.Sin((100.0/360.0) * 2.0 * math.Pi)) // keine Ahnung was hier genau rein muss
+	startPosRowOne := (squareLength - sideLength) / 2
+	startPosRel := size * float32(startPosRowOne)/float32(squareLength)
+	stepsPerRow := float32(startPosRowOne)/(float32(squareLength)/2)
+
+	stepX = size / float32(squareLength)
+	stepY = size / float32(squareLength)
+	heightstep := stepX /HeightFaktor
+
+	c1 := Vec3{0,startPosRel, 0}
+	c2 := Vec3{0,size- startPosRel, 0}
+	c3 := Vec3{size/2,size, 0}
+	c4 := Vec3{size-stepX,size-startPosRel, 0}
+	c5 := Vec3{size-stepX,startPosRel , 0}
+	c6 := Vec3{size/2,0,0}
+
+	c7 := Vec3{0,startPosRel, MapHeight}
+	c8 := Vec3{0,size- startPosRel, MapHeight}
+	c9 := Vec3{size/2,size, MapHeight}
+	c10 := Vec3{size-stepX,size-startPosRel, MapHeight}
+	c11 := Vec3{size-stepX,startPosRel , MapHeight}
+	c12 := Vec3{size/2,0,MapHeight}
+
+	t1 := triangle{c6, c1,c2}
+	t2 := triangle{c6, c2,c3}
+	t3 := triangle{c6, c3,c4}
+	t4 := triangle{c6, c4,c5}
+
+	t11 := triangle{c1,c8,c2}
+	t12 := triangle{c1,c7,c8}
+	t21 := triangle{c2,c9,c3}
+	t22 := triangle{c2,c8,c9}
+	t31 := triangle{c3,c10,c4}
+	t32 := triangle{c3,c9,c10}
+	t41 := triangle{c4,c11,c5}
+	t42 := triangle{c4,c10,c11}
+	t51 := triangle{c5,c12,c6}
+	t52 := triangle{c5,c11,c12}
+	t61 := triangle{c6,c7,c1}
+	t62 := triangle{c6,c12,c7}
+
+	triangles = append(triangles, t1,t2,t3,t4,t11,t12,t21,t22,t31,t32,t41,t42,t51,t52,t61,t62)
+	for x := 0; x < squareLength; x++ {
+
+		offset  = getCatanOffset(x, squareLength, stepsPerRow)
+		for y:= startPosRowOne-offset; y < startPosRowOne + sideLength + offset ; y++{
+			v1 := Vec3{float32(x) * stepX, float32(y) * stepY, heightMap[x][y]*heightstep + MapHeight}
+			if x < squareLength - 1 && y < startPosRowOne + sideLength + offset -1 {
+				v2 := Vec3{float32(x+1) * stepX, float32(y) * stepY, heightMap[x+1][y]*heightstep + MapHeight}
+				v3 := Vec3{float32(x) * stepX, float32(y+1) * stepY, heightMap[x][y+1]*heightstep + MapHeight}
+				v4 := Vec3{float32(x+1) * stepX, float32(y+1) * stepY, heightMap[x+1][y+1]*heightstep + MapHeight}
+				t1 := triangle{v1, v2, v4}
+				t2 := triangle{v1, v4, v3}
+				triangles = append(triangles, t1, t2)
+			}
+			if y == startPosRowOne-offset{ // links
+			//oben
+				if (x!= 0 && x <= squareLength/2 && y < startPosRowOne - getCatanOffset(x-1,squareLength ,stepsPerRow )){
+					xoff := 1
+					for{
+						if (!(y+1 >= startPosRowOne - getCatanOffset(x-xoff,squareLength, stepsPerRow ))|| x -xoff < 0){
+							xoff =xoff-1
+							break
+						}
+						xoff = xoff+1
+					}
+
+					vr := Vec3{float32(x) * stepX, float32(y+1) * stepY, heightMap[x][y+1] * heightstep + MapHeight}
+					vu := Vec3{float32(x-xoff) * stepX, float32(y+1)* stepY, heightMap[x-xoff][y+1] * heightstep + MapHeight}
+					vd := Vec3{float32(x) * stepX, startPosRel-((float32(x)/(float32(squareLength)/2)) * startPosRel), MapHeight}
+					vud := Vec3{float32(x-xoff) * stepX, startPosRel -((float32(x-xoff)/(float32(squareLength)/2)) * startPosRel), MapHeight}
+
+					tu := triangle{v1, vr,vu}
+					td1 := triangle{v1, vud, vd}
+					td2 := triangle{v1, vu, vud}
+					triangles = append(triangles, tu, td1, td2)
+
+				}
+				//unten
+				if (x > squareLength/2 && y < startPosRowOne - getCatanOffset(x+1, squareLength, stepsPerRow )|| x == squareLength-2){
+					xoff := 0
+					for{
+						if ((y-1 >= startPosRowOne - getCatanOffset(x-xoff, squareLength, stepsPerRow ))|| x - xoff <= squareLength/2){
+							xoff = xoff-1
+							break
+						}
+						xoff = xoff+1
+					}
+					vb := Vec3{float32(x+1) * stepX, float32(y) * stepY, heightMap[x+1][y] * heightstep + MapHeight}
+					vl := Vec3{float32(x-xoff) * stepX, float32(y-1) * stepY, heightMap[x-xoff][y-1] * heightstep + MapHeight}
+					vu := Vec3{float32(x-xoff) * stepX, float32(y)* stepY, heightMap[x-xoff][y] * heightstep + MapHeight}
+					vd := Vec3{float32(x+1) * stepX, ((float32(x+1)-float32(squareLength)/2)/(float32(squareLength)/2)) * startPosRel, MapHeight}
+					vud := Vec3{float32(x-xoff) * stepX, ((float32(x-xoff)-float32(squareLength)/2)/(float32(squareLength)/2)) * startPosRel, MapHeight}
+
+					tu := triangle{vb, vu,vl}
+					td1 := triangle{vb, vl, vud}
+					td2 := triangle{vb, vud, vd}
+					triangles = append(triangles, tu , td1, td2)
+				}
+			}
+			if(x == squareLength/2 && squareLength % 2 ==0) {
+				if y == 0 {
+					vb := Vec3{float32(x+1) * stepX, 0, heightMap[x+1][y]*heightstep + MapHeight}
+					vd := Vec3{float32(x) * stepX, startPosRel - ((float32(x) / (float32(squareLength) / 2)) * startPosRel), MapHeight}
+					vbd := Vec3{float32(x+1) * stepX, (float32(x+1)/(float32(squareLength)/2) - 1) * startPosRel, MapHeight}
+					veck := Vec3{size / 2, 0, MapHeight}
+					td1 := triangle{v1, vd, veck}
+					td2 := triangle{v1, veck, vb}
+					td3 := triangle{vb, veck, vbd}
+					triangles = append(triangles, td1, td2, td3)
+				}
+				if y == squareLength {
+					vb := Vec3{float32(x+1) * stepX, size, heightMap[x+1][y]*heightstep + MapHeight}
+					vd := Vec3{float32(x) * stepX, size - (startPosRel -((float32(x) / (float32(squareLength) / 2)) * startPosRel)), MapHeight}
+					vbd := Vec3{float32(x+1) * stepX, size - (float32(x+1)/(float32(squareLength)/2) - 1) * startPosRel, MapHeight}
+					veck := Vec3{size / 2, size, MapHeight}
+
+					td1:= triangle {v1,veck,vd}
+					td2:= triangle {v1,vb,veck}
+					td3:= triangle {vb,vbd,veck}
+					triangles = append(triangles, td1, td2, td3)
+				}
+			}
+
+
+
+
+
+			if y == (startPosRowOne + sideLength + offset - 1){ // rechts
+			//oben
+				if (x!= 0 && x <= squareLength/2 && y >= startPosRowOne + sideLength + getCatanOffset(x-1,squareLength ,stepsPerRow )){
+					xoff := 1
+					for{
+						if (y-1 >= startPosRowOne +sideLength+ getCatanOffset(x-xoff,squareLength, stepsPerRow )|| x -xoff < 0){
+							xoff =xoff-1
+							break
+						}
+						xoff = xoff+1
+					}
+
+					vl := Vec3{float32(x) * stepX, float32(y-1) * stepY, heightMap[x][y-1] * heightstep + MapHeight}
+					vu := Vec3{float32(x-xoff) * stepX, float32(y-1)* stepY, heightMap[x-xoff][y-1] * heightstep + MapHeight}
+					vd := Vec3{float32(x) * stepX, size - (startPosRel-((float32(x)/(float32(squareLength)/2)) * startPosRel)), MapHeight}
+					vud := Vec3{float32(x-xoff) * stepX, size-(startPosRel -((float32(x-xoff)/(float32(squareLength)/2)) * startPosRel)), MapHeight}
+
+					tu := triangle{v1, vu,vl}
+					td1 := triangle{v1, vd, vud}
+					td2 := triangle{v1, vud, vu}
+					triangles = append(triangles, tu , td1, td2)
+
+				}
+				//unten
+				if (x > squareLength/2 && y >= startPosRowOne + sideLength + getCatanOffset(x+1, squareLength, stepsPerRow )|| x == squareLength-2){
+					xoff := 0
+					for{
+						if ((y+1 < startPosRowOne + sideLength + getCatanOffset(x-xoff, squareLength, stepsPerRow ))|| x - xoff <= squareLength/2){
+							break
+						}
+						xoff = xoff+1
+					}
+					vb := Vec3{float32(x+1) * stepX, float32(y) * stepY, heightMap[x+1][y] * heightstep + MapHeight}
+					vr := Vec3{float32(x-xoff) * stepX, float32(y+1) * stepY, heightMap[x-xoff][y-1] * heightstep + MapHeight}
+					vu := Vec3{float32(x-xoff) * stepX, float32(y)* stepY, heightMap[x-xoff][y] * heightstep + MapHeight}
+					vd := Vec3{float32(x+1) * stepX, size- ((float32(x+1)-float32(squareLength)/2)/(float32(squareLength)/2)) * startPosRel, MapHeight}
+					vud := Vec3{float32(x-xoff) * stepX, size - ((float32(x-xoff)-float32(squareLength)/2)/(float32(squareLength)/2)) * startPosRel, MapHeight}
+
+					tu := triangle{vb, vr,vu}
+					td1 := triangle{vb, vud, vr}
+					td2 := triangle{vb, vd, vud}
+					triangles = append(triangles, tu , td1, td2)
+				}
+			}
+
+
+
+
+
+
+			if x == 0 && heightMap[x][y] != 0 {
+				vd := Vec3{v1.X(), v1.Y(), MapHeight}
+				if y < startPosRowOne + sideLength + offset-1 {
+					vr := Vec3{v1.X(), v1.Y() + stepY, MapHeight}
+					triangles = append(triangles, triangle{v1, vd, vr})
+				}
+				if y > startPosRowOne-offset {
+					vl := Vec3{v1.X(), v1.Y() - stepY, heightMap[x][y-1]*heightstep + MapHeight}
+					triangles = append(triangles, triangle{v1, vl, vd})
+				}
+			}
+			if x == squareLength-1 && heightMap[x][y] != 0 {
+				vd := Vec3{v1.X(), v1.Y(), MapHeight}
+				if y < startPosRowOne + sideLength + offset-1 {
+					vr := Vec3{v1.X(), v1.Y() + stepY, MapHeight}
+					triangles = append(triangles, triangle{v1, vr, vd})
+				}
+				if y > startPosRowOne-offset {
+					vl := Vec3{v1.X(), v1.Y() - stepY, heightMap[x][y-1]*heightstep + MapHeight} //falsch
+					triangles = append(triangles, triangle{v1, vd, vl})
+				}
+			}
+
+		}
+	}
+
+	generateSTLMapFromTriangles(triangles)
+
+}
+
+func getCatanOffset(x int, squareLength int, stepsPerRow float32) int{
+	if x < squareLength/2 {
+		return int(float32(x)* stepsPerRow )
+	}else{
+		return int(float32(squareLength-x) * stepsPerRow)
+	}
 }
 
 func GenerateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32){
 	var stepX float32
 	var stepY float32
+	var sizeX float32
+	var sizeY float32
 	size := float32(sizeInMM)
+	if (len(heightMap) > len(heightMap[0])){
+		sizeX = size
+		sizeY = size * (float32(len(heightMap[0])) / float32(len(heightMap)))
+	} else {
+		sizeY = size
+		sizeX = size * (float32(len(heightMap)) / float32(len(heightMap[0])))
+	}
 	c1 := Vec3{0, 0, 0}               //bottom up left
-	c2 := Vec3{size, 0, 0}            //bottom up right
-	c3 := Vec3{size, size, 0}         // bottom down right
-	c4 := Vec3{0, size, 0}            //bottom down left
+	c2 := Vec3{sizeX, 0, 0}            //bottom up right
+	c3 := Vec3{sizeX, sizeY, 0}         // bottom down right
+	c4 := Vec3{0, sizeY, 0}            //bottom down left
 	c5 := Vec3{0, 0, MapHeight}       // top up left
-	c6 := Vec3{size, 0, MapHeight}    //top up right
-	c7 := Vec3{size, size, MapHeight} //top down right
-	c8 := Vec3{0, size, MapHeight}    //top down left
+	c6 := Vec3{sizeX, 0, MapHeight}    //top up right
+	c7 := Vec3{sizeX, sizeY, MapHeight} //top down right
+	c8 := Vec3{0, sizeY, MapHeight}    //top down left
 
 	ct1 := triangle{c1, c2, c3}  //bottom
 	ct2 := triangle{c1, c3, c4}  //bottom
@@ -110,8 +361,8 @@ func GenerateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32){
 	ct9 := triangle{c4, c8, c5}  //left
 	ct10 := triangle{c4, c5, c1} //left
 
-	stepX = size / float32(len(heightMap)-1)
-	stepY = size / float32(len(heightMap[0])-1)
+	stepX = sizeX / float32(len(heightMap)-1)
+	stepY = sizeY / float32(len(heightMap[0])-1)
 	heightstep := (stepX + stepY) / (HeightFaktor * 2)
 	var triangles []triangle
 	triangles = append(triangles, ct1,ct2,ct3,ct4,ct5,ct6,ct7,ct8,ct9,ct10)
@@ -176,6 +427,16 @@ func GenerateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32){
 	}
 	generateSTLMapFromTriangles(triangles)
 }
+
+func getSquareMap(heightMap [][]float32) [][]float32 {
+	length := int(math.Min(float64(len(heightMap)), float64(len(heightMap[0]))))
+	squaredMap := make([][]float32, length)
+	for x := 0 ; x < length ; x++ {
+		squaredMap[x] = heightMap[x][:length]
+	}
+	return squaredMap
+}
+
 
 func generateSTLMapFromTriangles(triangles []triangle) {
 	var header [80]byte
