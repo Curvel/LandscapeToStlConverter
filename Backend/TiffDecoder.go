@@ -33,6 +33,7 @@ var leftFlag = flag.Float64("swLng", 10000.0, "left coordinate of selected area"
 var modelTypeFlag = flag.String("model", "", "surface|section")
 var croppingFlag = flag.String("cropping", "", "sqr|hex|rnd")
 var lengthFlag = flag.Int("length", 0, "length of the largest side in mm")
+var fileNameFlag = flag.String("name", "", "name of the stl file")
 var heightFactorFlag = flag.Float64("heightFactor", 0.0, "smaller is bigger")
 
 func main() {
@@ -45,14 +46,15 @@ func main() {
 	var modelType = *modelTypeFlag
 	var cropping = *croppingFlag
 	var length = *lengthFlag
-	var _ = *heightFactorFlag
+	var fileName = *fileNameFlag
+	var heightFactor = float32(*heightFactorFlag)
 
 	heightMap, err := getHeightMap(top, right, bottom, left)
 
 	if heightMap != nil {
 		if modelType == "surface" {
 			if cropping == "sqr" {
-				Stl.GenerateSTLMapFromHeightMap(heightMap, uint32(length))
+				Stl.GenerateSTLMapFromHeightMap(heightMap, uint32(length), heightFactor, fileName)
 			}
 		}
 	}
@@ -206,7 +208,6 @@ func loadImagesForRange(top float32, right float32, bottom float32, left float32
 
 func srtmTiffToImage(name string) (image.Image, error) {
 	uri := fmt.Sprintf("./srtm/%s/%s.tif", name, name)
-
 	file, err := os.Open(uri)
 	if err != nil {
 		return nil, err

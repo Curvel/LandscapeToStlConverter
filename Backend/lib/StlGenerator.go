@@ -16,7 +16,6 @@ import (
 const MapHeight = 2.0
 const ProfileHeight = 5.0
 const ProfileThickness = 2.0
-const HeightFaktor =10.0
 
 type triangle struct {
 	v1 Vec3
@@ -24,11 +23,11 @@ type triangle struct {
 	v3 Vec3
 }
 
-func GenerateSTLMapFromSideMap(sidemap []float32, sizeInMM uint32){
+func GenerateSTLMapFromSideMap(sidemap []float32, sizeInMM uint32, heightFactor float32, fileName string){
 	var step float32
 	size :=float32(sizeInMM)
 	step = size / float32(len(sidemap)-1)
-	heightstep := step / HeightFaktor
+	heightstep := step / heightFactor
 	c1:= Vec3{0,0,0}
 	c2:= Vec3{ProfileHeight,0, 0}
 	c3:= Vec3{ProfileHeight,size, 0}
@@ -83,10 +82,10 @@ func GenerateSTLMapFromSideMap(sidemap []float32, sizeInMM uint32){
 			triangles = append (triangles, ct3,ct4)
 		}
 	}
-	generateSTLMapFromTriangles(triangles)
+	generateSTLMapFromTriangles(triangles, fileName)
 }
 
-func GenerateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32){
+func GenerateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32, heightFactor float32, fileName string){
 	var stepX float32
 	var stepY float32
 	size := float32(sizeInMM)
@@ -112,7 +111,7 @@ func GenerateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32){
 
 	stepX = size / float32(len(heightMap)-1)
 	stepY = size / float32(len(heightMap[0])-1)
-	heightstep := (stepX + stepY) / (HeightFaktor * 2)
+	heightstep := (stepX + stepY) / (heightFactor * 2)
 	var triangles []triangle
 	triangles = append(triangles, ct1,ct2,ct3,ct4,ct5,ct6,ct7,ct8,ct9,ct10)
 	for i := 0; i< len(heightMap); i++ {
@@ -174,10 +173,10 @@ func GenerateSTLMapFromHeightMap(heightMap [][]float32, sizeInMM uint32){
 
 		}
 	}
-	generateSTLMapFromTriangles(triangles)
+	generateSTLMapFromTriangles(triangles, fileName)
 }
 
-func generateSTLMapFromTriangles(triangles []triangle) {
+func generateSTLMapFromTriangles(triangles []triangle, fileName string) {
 	var header [80]byte
 	var byteStl []byte
 	byteStl = header[:80]
@@ -186,17 +185,15 @@ func generateSTLMapFromTriangles(triangles []triangle) {
 	byteStl = append(byteStl, triangleCount...)
 	for i := 0; i < len(triangles); i++ {
 
-		triangleByte := triangleToByte(triangles[i].v1, triangles[i].v2, triangles[i].v3)
+		triangleByte := triangleToByte(triangles[i].v1, triangles[i].v2, triangles[i].v3, fileName)
 		byteStl = append(byteStl, triangleByte...)
 
 	}
 
-	writeByteToFile(byteStl)
-
-	log.Print("Test")
+	writeByteToFile(byteStl, fileName)
 }
 
-func triangleToByte(vector1 Vec3, vector2 Vec3, vector3 Vec3) []byte {
+func triangleToByte(vector1 Vec3, vector2 Vec3, vector3 Vec3, fileName string) []byte {
 
 	var returnBytes []byte
 	var colorBytes []byte
@@ -300,8 +297,9 @@ func writeStringToFile(s string) {
 	}
 }
 
-func writeByteToFile(b []byte) {
-	f, err := os.Create("test.stl")
+func writeByteToFile(b []byte, fileName string) {
+	completeFileName := fmt.Sprintf("%s.stl", fileName)
+	f, err := os.Create(completeFileName)
 	if err != nil {
 		fmt.Println(err)
 		return
