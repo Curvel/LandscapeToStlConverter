@@ -1,6 +1,11 @@
 version: '3'
 
-services:  
+services:
+  stl-backend:
+    build: ./backend
+    container_name: container-stl-backend
+    volumes:
+      - stlapp:/app
   stl-frontend:
     build: ./frontend
     container_name: container-stl-frontend
@@ -8,3 +13,9 @@ services:
       - NODE_ENV=production #or development
     ports:
       - 1234:1234
+    volumes:
+      - stlapp:/app
+    depends_on:
+      - stl-backend
+volumes:
+  stlapp:
