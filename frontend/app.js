@@ -40,8 +40,8 @@ io.on('connection', function(socket){
 
     // Start conversion
     var fileName = core.getRandomFilename();
-    var proc = spawn('go',  ['run', '../Backend/StlGenerator.go', '-file=' + fileName]);
-    //var proc = spawn('go',  ['run', '../Backend/TiffDecoder.go', '-neLat=50.1', '-neLng=10.1', '-swLat=49.9', '-swLng=9.9', '-model=surface', '-cropping=sqr', '-length=50', '-heightFactor=20.0', '-name=' + fileName]);
+    var proc = spawn('go',  ['run', '../backend/mocked/MockedTiffDecoder.go', '-file=' + fileName]);
+    //var proc = spawn('go',  ['run', '../backend/TiffDecoder.go', '-neLat=50.1', '-neLng=10.1', '-swLat=49.9', '-swLng=9.9', '-model=surface', '-cropping=sqr', '-length=50', '-heightFactor=20.0', '-name=' + fileName]);
 
     // Server-side only
     proc.stderr.on('data', (data) => {
