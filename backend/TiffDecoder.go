@@ -57,20 +57,18 @@ func main() {
 	if modelType == "surface" {
 		heightMap, err := getHeightMap(top, right, bottom, left)
 		mErr = err
-		if heightMap != nil {
+		if heightMap != nil && err == nil {
 			if cropping == "sqr" {
-				Stl.GenerateSTLMapFromHeightMap(heightMap, uint32(length), heightFactor, fileName)
-			}
-			if cropping == "hex" {
-				Stl.GenerateSettlerOfCatan(heightMap, uint32(length), heightFactor, fileName)
+				mErr = Stl.GenerateSTLMapFromHeightMap(heightMap, uint32(length), heightFactor, fileName)
+			} else if cropping == "hex" {
+				mErr = Stl.GenerateSettlerOfCatan(heightMap, uint32(length), heightFactor, fileName)
 			}
 		}
-	}
-	if modelType == "section"{
-		profileMap, err := getProfileMap(top,right,bottom,left)
-			mErr = err
-		if profileMap != nil {
-			Stl.GenerateSTLMapFromSideMap(profileMap, uint32(length), heightFactor, fileName)
+	} else if modelType == "section" {
+		profileMap, err := getProfileMap(top, right, bottom, left)
+		mErr = err
+		if profileMap != nil && err == nil {
+			mErr = Stl.GenerateSTLMapFromSideMap(profileMap, uint32(length), heightFactor, fileName)
 		}
 	}
 
@@ -112,17 +110,17 @@ func isSelectionInRange(top float32, right float32, bottom float32, left float32
 	return top <= maxTop && right <= maxRight && left >= maxLeft && bottom >= maxBottom
 }
 
-func getProfileMap(top float32, right float32, bottom float32, left float32) ([]float32, error){
-	heightMap, err:= getHeightMap(top, right, bottom, left)
+func getProfileMap(top float32, right float32, bottom float32, left float32) ([]float32, error) {
+	heightMap, err := getHeightMap(top, right, bottom, left)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 	lengthX := float32(len(heightMap[0]))
 	lengthY := float32(len(heightMap))
-	var stepX  float32
-	var stepY  float32
-	var size  int
-	if (lengthY > lengthX){
+	var stepX float32
+	var stepY float32
+	var size int
+	if (lengthY > lengthX) {
 		size = int(lengthY)
 		stepY = 1.0
 		stepX = lengthX / lengthY
@@ -132,15 +130,13 @@ func getProfileMap(top float32, right float32, bottom float32, left float32) ([]
 		stepY = lengthY / lengthX
 	}
 	profileMap := make([]float32, size)
-	for i := 0; i < size-1; i++{
-		profileMap[i] = heightMap[int(float32(i)* stepY)][int(float32(i)*stepX)]
+	for i := 0; i < size-1; i++ {
+		profileMap[i] = heightMap[int(float32(i)*stepY)][int(float32(i)*stepX)]
 	}
-	 return profileMap, nil
+	return profileMap, nil
 }
 
-
-
-func getHeightMap(top float32, right float32, bottom float32, left float32) ([][]float32, error){
+func getHeightMap(top float32, right float32, bottom float32, left float32) ([][]float32, error) {
 	//fmt.Println("Load HeightMap")
 
 	if !isSelectionInRange(top, right, bottom, left) {
@@ -163,8 +159,8 @@ func getHeightMap(top float32, right float32, bottom float32, left float32) ([][
 	xScale := (maxRight - maxLeft) / imgXPoints
 
 	// Size of generated Height Map
-	xSize := int( mgl32.Round((right - left) / xScale,0))
-	ySize := int( mgl32.Round((top - bottom) / yScale,0))
+	xSize := int(mgl32.Round((right-left)/xScale, 0))
+	ySize := int(mgl32.Round((top-bottom)/yScale, 0))
 
 	//fmt.Printf("xSize: %d, ySize: %d\n", xSize, ySize)
 
@@ -195,14 +191,14 @@ func getHeightMap(top float32, right float32, bottom float32, left float32) ([][
 	return flipMapX(heightMap), nil
 }
 
-func flipMapX(heightMap [][]float32) [][]float32{
+func flipMapX(heightMap [][]float32) [][]float32 {
 	flippedMap := make([][]float32, len(heightMap))
 	for i := range flippedMap {
 		flippedMap[i] = make([]float32, len(heightMap[0]))
 	}
-	for i := 0; i < len(heightMap); i++{
-		for j := 0; j < len(heightMap[0]); j++{
-			flippedMap[i][(len(heightMap[0])-1) - j] = heightMap[i][j]
+	for i := 0; i < len(heightMap); i++ {
+		for j := 0; j < len(heightMap[0]); j++ {
+			flippedMap[i][(len(heightMap[0])-1)-j] = heightMap[i][j]
 		}
 	}
 	fmt.Println("100;0;0")
@@ -215,7 +211,7 @@ func getHeight(x int, y int, xScale float32, yScale float32, maxLeft float32, ma
 		return 0, err
 	}
 
-	r, _, _, _ := img.At((y%6000), 5999 - (x%6000)).RGBA()
+	r, _, _, _ := img.At((y % 6000), 5999-(x%6000)).RGBA()
 	if r > 10000 {
 		r = 0
 	}
