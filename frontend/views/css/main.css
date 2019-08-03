@@ -163,13 +163,32 @@ body {
 /* form */
 form button {
     margin-top: 15px;
+    margin-bottom: 15px;
 }
 
-#download {
-    margin-top: 15px;
+#progressbar {
+    margin-bottom: 15px;
 }
 
 /* PREVIEW SECTION */
 .preview-section {
     padding-top: 40px;
+}
+
+#stlViewer {
+    margin-top: 15px;
+    margin-bottom: 15px;
+    width: 100%;
+    min-height: 400px;
+    /*background-color: #256086;*/
+}
+
+/* FOOTER */
+#footer {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 10px;
+    margin-bottom: 20px;
+    border-top: 1px solid #dfdfdf;
+    padding-bottom: 5px;
 }

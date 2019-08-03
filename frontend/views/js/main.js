@@ -4,9 +4,6 @@ $(document).ready(function() {
 
     console.log('main.js ready() fired!');
 
-    // Enable the InputSpinner for all inputs with type='number'
-    //$("input[type='number']").inputSpinner();
-
     $('#form').on('submit', function( e ){
         e.preventDefault();
         printLandscape.handleGenerateButtonPressed();
@@ -29,6 +26,7 @@ var printLandscape = (function PrintLandscape() {
 
     var socket;
     var lastFileUrl;
+    var stlViewer;
 
     // Private member
     var validateInputFields = function( fields ) {
@@ -37,6 +35,7 @@ var printLandscape = (function PrintLandscape() {
 
         var cropping = ['sqr','hex','rnd'];
 
+        // TODO: Add heightFactor and length, ...
         for ( field of fields ) {
             if ( !field.name || !field.value )
                 return false;
@@ -75,10 +74,12 @@ var printLandscape = (function PrintLandscape() {
                 $('#submit').prop('disabled', false);
                 $('#progressbar').attr('hidden','');
                 $('#alert').attr('hidden','');
+                resetPercentage();
                 break;
             case status.IN_PROGRESS:
                 $('#submit').prop('disabled', true);
                 $('#progressbar').removeAttr('hidden');
+                scrollToBottom();
                 break;
             case status.SUCCESS:
                 $('#submit').prop('disabled', false);
@@ -86,7 +87,9 @@ var printLandscape = (function PrintLandscape() {
                 break;
             case status.FAILED:
                 $('#submit').prop('disabled', false);
+                $('#progressbar').attr('hidden','');
                 $('#alert').removeAttr('hidden');
+                resetPercentage();
                 break;
         }
     };
@@ -109,6 +112,7 @@ var printLandscape = (function PrintLandscape() {
             setStatus(status.SUCCESS);
 
             lastFileUrl = data;
+            loadPreview(lastFileUrl);
 
             socket.disconnect();
         });
@@ -119,7 +123,18 @@ var printLandscape = (function PrintLandscape() {
             socket.disconnect();
         });
 
-        socket.emit('requestConvert', {data: data, id: 'unused'});
+        socket.emit('requestConvert', {fields: data, id: 'unused'});
+    };
+    var loadPreview = function( pathToFile ) {
+        $('.preview-section').removeAttr('hidden');
+        $('#stlViewer').find('canvas:first').remove();
+
+        // Should be: /files/file.stl
+        stlViewer = new StlViewer(document.getElementById("stlViewer"), { models: [ {id: 0, filename: pathToFile} ] });
+        scrollToBottom();
+    };
+    var scrollToBottom = function() {
+        $('html, body').animate({scrollTop:$(document).height()}, 'slow');
     };
 
     // Progress
@@ -128,6 +143,11 @@ var printLandscape = (function PrintLandscape() {
         setPartPercentage('#progressbarStep1', 'Generate height map...', percentage1);
         setPartPercentage('#progressbarStep2', 'Triangulation...', percentage2);
         setPartPercentage('#progressbarStep3', 'STL generation...', percentage3);
+    };
+    var resetPercentage = function() {
+        setPartPercentage('#progressbarStep1');
+        setPartPercentage('#progressbarStep2');
+        setPartPercentage('#progressbarStep3');
     };
     var setPartPercentage = function( elementSelector, title, totalPercentage ) {
         if ( totalPercentage && totalPercentage > 0 ) {
@@ -141,13 +161,16 @@ var printLandscape = (function PrintLandscape() {
             console.log(partPerventage + ' of ' + elementSelector);
             $(elementSelector).text(title + ' ' + totalPercentage + '%');
             $(elementSelector).width(partPerventage + "%");
+        } else {
+            $(elementSelector).text('');
+            $(elementSelector).width('0%');
         }
     };
 
     var tryToDownloadLastFile = function() {
         if ( lastFileUrl ) {
-            //window.open(lastFileUrl, '_blank');
-            alert('Redirect to: ' + lastFileUrl);
+            window.open(document.location.origin + lastFileUrl, '_blank');
+            //alert('Redirect to: ' + document.location.origin + lastFileUrl);
         } else {
             alert('None file generated yet.');
         }
@@ -161,6 +184,7 @@ var printLandscape = (function PrintLandscape() {
             var fields = $('#form').serializeArray();
             //JSON.stringify(fields);
             
+            // TODO: Implement
             /* if ( !validateInputFields(fields) ) {
                 alert('Validation failed.')
                 return;
@@ -169,7 +193,7 @@ var printLandscape = (function PrintLandscape() {
             console.log('Validation passed.');
 
             setStatus(status.IN_PROGRESS);
-            submitRequest();
+            submitRequest(fields);
         },
         downloadLastFile: function() {
             tryToDownloadLastFile();

@@ -42,10 +42,10 @@
                                             <a class="nav-link active" href="index.html"><i class="fas fa-home"></i>  Home</a>
                                         </li>
                                         <li class="nav-item">
-                                            <a class="nav-link" href="https://github.com/Curvel/LandscapeToStlConverter"><i class="fab fa-github"></i>  Github</a>
+                                            <a class="nav-link" href="https://github.com/Curvel/LandscapeToStlConverter" target= "_blank"><i class="fab fa-github"></i>  Github</a>
                                         </li>
                                         <li class="nav-item">
-                                            <a class="nav-link" href="https://www.hs-karlsruhe.de"><i class="fas fa-university"></i>  Hochschule Karlsruhe</a>
+                                            <a class="nav-link" href="https://www.hs-karlsruhe.de" target= "_blank"><i class="fas fa-university"></i>  Hochschule Karlsruhe</a>
                                         </li>
                                     </ul>
                                 </div>
@@ -68,7 +68,7 @@
                             </ol>
                             <div class="carousel-inner">
                                 <div class="carousel-item active">
-                                    <img class="d-block w-100" alt="Carousel Bootstrap First" src="img/banner/banner-1600-500-1.jpg" />
+                                    <img class="d-block w-100" alt="Carousel Bootstrap First" src="img/banner/banner-1600-500-1v2.jpg" />
                                     <div class="carousel-caption">
                                         <h4>
                                             Print your landscape
@@ -79,7 +79,7 @@
                                     </div>
                                 </div>
                                 <div class="carousel-item">
-                                    <img class="d-block w-100" alt="Carousel Bootstrap Second" src="img/banner/banner-1600-500-2.jpg" />
+                                    <img class="d-block w-100" alt="Carousel Bootstrap Second" src="img/banner/banner-1600-500-5v2.jpg" />
                                     <div class="carousel-caption">
                                         <h4>
                                             Various types of layouts
@@ -199,6 +199,12 @@
                                                     </div>
                                                 </div>
                                                 <div class="form-group row">
+                                                    <label for="heightFactor" class="col-sm-4 col-form-label">Height factor</label>
+                                                    <div class="col-sm-8">
+                                                        <input type="number" class="form-control" id="heightFactor" name="heightFactor" value="30" placeholder="">
+                                                    </div>
+                                                </div>
+                                                <div class="form-group row">
                                                     <label for="modelType" class="col-sm-4 col-form-label">Model</label>
                                                     <div class="col-sm-8">
                                                         <select id="modelType" name="modelType" class="form-control">
@@ -213,7 +219,7 @@
                                                         <select id="cropping" name="cropping" class="form-control">
                                                             <option value="sqr">Square</option>
                                                             <option value="hex">Hexagon</option>
-                                                            <option value="rnd">Round</option>
+                                                            <!--<option value="rnd">Round</option>-->
                                                         </select>
                                                     </div>
                                                 </div>
@@ -265,13 +271,16 @@
                     </div>
 
                     <!-- PREVIEW SECTION -->
-                    <div class="row preview-section">
+                    <div class="row preview-section" hidden>
                         <div class="col-md-12">
-                            <h3>
-                                Your model may look like
+                            <h3 style="text-align: center">
+                                Preview of the generated model
                             </h3>
-                            <img alt="Bootstrap Image Preview" src="https://www.layoutit.com/img/sports-q-c-140-140-3.jpg" />
+                            <div id="stlViewer"></div>
                         </div>
+                    </div>
+                    <div id="footer">
+                        <p>PrintLandScape created in 2019 at the University of Applied Sciences in Karlsruhe</p>
                     </div>
                 </div>
             </div>
@@ -281,6 +290,7 @@
         <script src="js/vendor/jquery-3.4.1.min.js"></script>
         <script src="js/vendor/bootstrap.min.js"></script>
         <script src="js/vendor/socket.io.js"></script>
+        <script src="js/vendor/viewer/stl_viewer.min.js"></script>
         <script src="js/main.js"></script>
         <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBnnoRf9OIvd7ZpXWqEIsixNFUCWzutO_Y&callback=mapsIntegration.initMap"></script>
     </body>
