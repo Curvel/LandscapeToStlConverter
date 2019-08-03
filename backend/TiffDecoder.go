@@ -9,6 +9,8 @@ import (
 	"golang.org/x/image/tiff"
 	"image"
 	"os"
+	"path/filepath"
+	"runtime"
 )
 
 type STRM struct {
@@ -36,25 +38,34 @@ var lengthFlag = flag.Int("length", 0, "length of the largest side in mm")
 var fileNameFlag = flag.String("name", "", "name of the stl file")
 var heightFactorFlag = flag.Float64("heightFactor", 0.0, "smaller is bigger")
 
+var projectPath string
+
 func main() {
 	flag.Parse()
 
-	var top = float32(*topFlag)
-	var right = float32(*rightFlag)
-	var bottom = float32(*bottomFlag)
-	var left = float32(*leftFlag)
-	var modelType = *modelTypeFlag
-	var cropping = *croppingFlag
-	var length = *lengthFlag
-	var fileName = *fileNameFlag
-	var heightFactor = float32(*heightFactorFlag)
+	var top= float32(*topFlag)
+	var right= float32(*rightFlag)
+	var bottom= float32(*bottomFlag)
+	var left= float32(*leftFlag)
+	var modelType= *modelTypeFlag
+	var cropping= *croppingFlag
+	var length= *lengthFlag
+	var fileName= *fileNameFlag
+	var heightFactor= float32(*heightFactorFlag)
 
 	//fmt.Printf("naLat: %f, neLang: %f, swLat: %f, swLng: %f, model: %s, cropping: %s, length: %d, name: %s, height: %f",
 	//	top, right, bottom, left, modelType, cropping, length, fileName, heightFactor)
 
 	var mErr error
 
-	if modelType == "surface" {
+	if runtime.GOOS == "darwin" {
+		projectPath = "./"
+	} else {
+		projectPath, mErr = filepath.Abs("./")
+	}
+
+
+	if modelType == "surface" && mErr == nil {
 		heightMap, err := getHeightMap(top, right, bottom, left)
 		mErr = err
 		if heightMap != nil && err == nil {
@@ -64,7 +75,7 @@ func main() {
 				mErr = Stl.GenerateSettlerOfCatan(heightMap, uint32(length), heightFactor, fileName)
 			}
 		}
-	} else if modelType == "section" {
+	} else if modelType == "section" && mErr == nil {
 		profileMap, err := getProfileMap(top, right, bottom, left)
 		mErr = err
 		if profileMap != nil && err == nil {
@@ -247,7 +258,7 @@ func loadImagesForRange(top float32, right float32, bottom float32, left float32
 }
 
 func srtmTiffToImage(name string) (image.Image, error) {
-	uri := fmt.Sprintf("./srtm/%s/%s.tif", name, name)
+	uri := fmt.Sprintf("%s/srtm/%s/%s.tif", projectPath, name, name)
 	file, err := os.Open(uri)
 	if err != nil {
 		return nil, err
